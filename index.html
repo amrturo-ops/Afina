@@ -189,6 +189,24 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surfa
 .err li+li{margin-top:6px}
 .logo{width:56px;height:56px}
 
+/* Premium */
+a.btn{display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit}
+a.btn.primary{color:var(--brand-ink)}
+.btn.disabled{opacity:.5;pointer-events:none}
+.pro-card{position:relative}
+.close{position:absolute;top:12px;right:12px;width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);font-size:1.5rem;line-height:1;cursor:pointer}
+.pro-tag{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--brand);color:var(--brand-ink);font-weight:800;font-size:.8rem;letter-spacing:.02em}
+.pro-reason{margin-top:10px;padding:12px 14px;border-radius:14px;background:var(--surface-2);font-weight:700}
+.perks{list-style:none;padding:0;margin:16px 0 0}
+.perks li{padding:8px 0 8px 30px;position:relative;border-bottom:1px solid var(--line)}
+.perks li::before{content:"";position:absolute;left:4px;top:13px;width:14px;height:8px;border-left:3px solid var(--ok);border-bottom:3px solid var(--ok);transform:rotate(-45deg)}
+input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line);background:var(--bg);padding:10px 14px;width:100%;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-size:.95rem}
+.pro-msg{margin-top:12px;min-height:1.5em}
+.pro-msg.bad{color:var(--off)} .pro-msg.good{color:var(--ok)}
+.lockmark{margin-left:6px;font-size:.85em}
+.more{color:var(--muted);padding:12px 0}
+.more button{background:none;border:0;color:var(--brand);font-weight:700;cursor:pointer;padding:0;min-height:32px}
+
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 </head>
@@ -320,6 +338,11 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surfa
       <div class="week" id="pg-week"></div>
     </div>
     <div class="stats" style="margin-top:14px" id="pg-stats"></div>
+    <div class="panel" id="pro-box" style="margin-top:14px">
+      <span class="pro-tag">PREMIUM</span>
+      <p id="pro-box-text" style="margin-top:10px"></p>
+      <div class="actions"><button class="btn primary" id="pro-open" type="button">Ver Premium</button></div>
+    </div>
     <div class="panel" id="install-box" style="margin-top:14px" hidden>
       <h3 style="font-size:1.2rem">Instala Afina en tu móvil</h3>
       <p class="hint" id="install-text" style="margin-top:6px"></p>
@@ -352,6 +375,36 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surfa
   </div>
 </div>
 
+<div class="gate" id="pro" role="dialog" aria-modal="true" aria-labelledby="pro-title" hidden>
+  <div class="gate-card pro-card">
+    <button class="close" id="pro-close" type="button" aria-label="Cerrar">×</button>
+    <span class="pro-tag">PREMIUM</span>
+    <h1 id="pro-title">Canta sin límites</h1>
+    <p class="pro-reason" id="pro-reason" hidden></p>
+    <div id="pro-free">
+      <ul class="perks">
+        <li>Todas las escalas y arpegios</li>
+        <li>Imitar notas sin límite diario</li>
+        <li>Historial completo de tus prácticas</li>
+        <li>Los nuevos ejercicios y programas que vayan llegando</li>
+      </ul>
+      <a class="btn primary big" id="pro-buy" href="#" target="_blank" rel="noopener" style="margin-top:20px">Hazte Premium</a>
+      <div class="field" style="margin-top:22px">
+        <label for="pro-key">¿Ya has comprado? Pega tu clave de licencia</label>
+        <input type="text" id="pro-key" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Clave del correo de compra">
+      </div>
+      <button class="btn big" id="pro-activate" type="button" style="width:100%;margin-top:10px">Activar</button>
+    </div>
+    <div id="pro-active" hidden>
+      <p style="margin-top:14px">Tienes Afina Premium activado en este dispositivo. ¡Gracias por apoyar la app!</p>
+      <p class="small-label" id="pro-active-key" style="margin-top:8px"></p>
+      <button class="btn" id="pro-deactivate" type="button" style="width:100%;margin-top:18px">Desactivar en este dispositivo</button>
+      <p class="small-label" style="margin-top:8px">Úsalo si vas a pasar tu licencia a otro móvil u ordenador.</p>
+    </div>
+    <p class="pro-msg" id="pro-msg" role="status"></p>
+  </div>
+</div>
+
 <script>
 (function(){
 "use strict";
@@ -381,6 +434,74 @@ function record(type,score,label){
   if(score>(data.best[type]||0)) data.best[type]=score;
   save();
 }
+/* ---------- Premium (licencias) ---------- */
+// CONFIGURACIÓN: rellena estos datos con los de tu tienda.
+const CONFIG={
+  CHECKOUT_URL:'',            // Enlace de compra de tu producto (Lemon Squeezy > Share)
+  PRODUCT_ID:null,            // Número de producto de Lemon Squeezy (evita claves de otros productos)
+  LICENSE_API:'https://api.lemonsqueezy.com/v1/licenses',
+  FREE_IMITATE_PER_DAY:5,     // Notas gratis al día en Imitar
+  FREE_SCALES:['mayor5'],     // Ejercicios de escalas gratuitos
+  FREE_HISTORY:3              // Prácticas visibles en el historial gratuito
+};
+function deviceName(){
+  const u=navigator.userAgent;
+  if(/iPhone/.test(u)) return 'iPhone';
+  if(/iPad/.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1)) return 'iPad';
+  if(/Android/.test(u)) return 'Android';
+  if(/Mac/.test(u)) return 'Mac';
+  if(/Win/.test(u)) return 'Windows';
+  return 'Otro dispositivo';
+}
+function licErr(e){
+  const m=String(e||'').toLowerCase();
+  if(m.includes('limit')) return 'Esta clave ya está activada en el máximo de dispositivos permitidos. Desactívala en otro dispositivo primero.';
+  if(m.includes('expired')) return 'Esta licencia ha caducado. Si era una suscripción, renuévala para seguir con Premium.';
+  if(m.includes('disabled')) return 'Esta clave está desactivada.';
+  if(m.includes('not found')||m.includes('invalid')||m.includes('does not exist')) return 'No encuentro esa clave. Comprueba que la has copiado completa.';
+  return 'No se ha podido activar la clave'+(e?' ('+e+')':'')+'.';
+}
+const PRO={
+  is(){const p=data.premium;return !!(p&&p.key&&p.instance&&p.ok);},
+  async call(path,params){
+    const r=await fetch(CONFIG.LICENSE_API+'/'+path,{method:'POST',headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(params)});
+    let j={}; try{j=await r.json();}catch(e){}
+    return j;
+  },
+  async activate(key){
+    key=key.trim();
+    if(!/^[A-Za-z0-9-]{8,}$/.test(key)) return {error:'Esa clave no tiene el formato correcto. Cópiala tal cual aparece en el correo de compra.'};
+    let j;
+    try{j=await PRO.call('activate',{license_key:key,instance_name:'Afina en '+deviceName()});}
+    catch(e){return {error:'No se ha podido conectar con el servidor de licencias. Comprueba tu conexión a internet e inténtalo de nuevo.'};}
+    if(!j||!j.activated) return {error:licErr(j&&j.error)};
+    if(CONFIG.PRODUCT_ID!=null&&j.meta&&+j.meta.product_id!==+CONFIG.PRODUCT_ID){
+      try{await PRO.call('deactivate',{license_key:key,instance_id:j.instance.id});}catch(e){}
+      return {error:'Esta clave no corresponde a Afina.'};
+    }
+    data.premium={key,instance:j.instance&&j.instance.id,ok:true,checked:Date.now()};
+    save(); return {ok:true};
+  },
+  async recheck(){
+    const p=data.premium;
+    if(!p||!p.key||!p.instance||!navigator.onLine) return;
+    if(Date.now()-(p.checked||0)<3*864e5) return;
+    try{
+      const j=await PRO.call('validate',{license_key:p.key,instance_id:p.instance});
+      if(j&&j.valid===true){p.ok=true;p.checked=Date.now();save();}
+      else if(j&&j.valid===false){p.ok=false;p.checked=Date.now();save();refreshPro();}
+    }catch(e){/* sin conexión: se mantiene el estado guardado */}
+  },
+  async deactivate(){
+    const p=data.premium; if(!p) return {ok:true};
+    try{const j=await PRO.call('deactivate',{license_key:p.key,instance_id:p.instance}); if(j&&j.deactivated===false&&j.error&&!/not found/i.test(j.error)) return {error:'No se ha podido desactivar: '+j.error};}
+    catch(e){return {error:'Necesitas conexión a internet para desactivar la licencia.'};}
+    data.premium=null; save(); return {ok:true};
+  }
+};
+function imitateToday(){return data.sessions.filter(x=>x.type==='imitate'&&new Date(x.ts).toLocaleDateString('sv')===today()).length;}
+function scaleLocked(k){return !PRO.is()&&!CONFIG.FREE_SCALES.includes(k);}
+
 function hasRange(){return data.range.low!=null&&data.range.high!=null&&data.range.high>data.range.low;}
 function comfy(){
   if(!hasRange()) return [55,67];
@@ -642,9 +763,14 @@ const TN={
 const IM={
   g:new Graph($('#im-graph')), target:null, phase:'idle', frames:[], tSing:0, tEnd:0,
   enter(){IM.g.resize();IM.hint();},
-  hint(){$('#im-range-hint').textContent=hasRange()?'Las notas se eligen dentro de tu rango cómodo: '+nTxt(comfy()[0])+' a '+nTxt(comfy()[1])+'.':'Consejo: mide tu rango vocal en la pestaña Rango para que las notas se adapten a tu voz.';},
+  hint(){
+    let t=hasRange()?'Las notas se eligen dentro de tu rango cómodo: '+nTxt(comfy()[0])+' a '+nTxt(comfy()[1])+'.':'Consejo: mide tu rango vocal en la pestaña Rango para que las notas se adapten a tu voz.';
+    if(!PRO.is()){const left=Math.max(0,CONFIG.FREE_IMITATE_PER_DAY-imitateToday());t+=' Te quedan '+left+' '+(left===1?'nota gratis':'notas gratis')+' hoy.';}
+    $('#im-range-hint').textContent=t;
+  },
   start(repeat){
     if(!eng.on){showGate('paused');return;}
+    if(!PRO.is()&&imitateToday()>=CONFIG.FREE_IMITATE_PER_DAY){openPro('Has usado tus '+CONFIG.FREE_IMITATE_PER_DAY+' notas gratis de hoy. Mañana tendrás más, o sigue ahora sin límite con Premium.');return;}
     silenceAll();
     const [lo,hi]=comfy(); let m;
     if(repeat&&IM.target!=null) m=IM.target;
@@ -673,7 +799,7 @@ const IM={
     IM.phase='idle';
     $('#im-go').disabled=false; $('#im-again').disabled=false;
     const tg=IM.target;
-    if(IM.frames.length<20){IM.setPhase('No te he oído bien',false);showImResult(null);return;}
+    if(IM.frames.length<20){IM.setPhase('No te he oído bien',false);showImResult(null);return;}  // no cuenta para el límite
     let devs=IM.frames.map(m=>(m-tg)*100);
     const med=devs.slice().sort((a,b)=>a-b)[devs.length>>1];
     let octave=0;
@@ -692,7 +818,7 @@ const IM={
     if(stb<60) fb.push('La nota oscila: mantén el volumen constante y suelta el aire de forma continua.');
     IM.setPhase(score>=80?'¡Genial!':score>=60?'Bien':'Sigue practicando',false);
     showImResult({score,acc,stb,fb:fb.join(' ')});
-    record('imitate',score,'Imitar '+nTxt(tg));
+    record('imitate',score,'Imitar '+nTxt(tg)); IM.hint();
   },
   reset(){IM.phase='idle';$('#im-go').disabled=false;$('#im-again').disabled=IM.target==null;IM.setPhase('Pulsa Nueva nota para empezar',false);}
 };
@@ -722,10 +848,18 @@ const SC={
     const box=$('#sc-ex');
     Object.keys(EX).forEach((k,i)=>{
       const l=document.createElement('label'); l.className='chip';
-      l.innerHTML='<input type="radio" name="ex" value="'+k+'"'+(i===0?' checked':'')+'><span>'+EX[k].name+'</span>';
+      l.innerHTML='<input type="radio" name="ex" value="'+k+'"'+(i===0?' checked':'')+'><span data-k="'+k+'">'+EX[k].name+'</span>';
       box.appendChild(l);
     });
-    box.addEventListener('change',e=>{SC.ex=e.target.value;SC.fillTonic();SC.tipText();});
+    box.addEventListener('change',e=>{
+      const k=e.target.value;
+      if(scaleLocked(k)){
+        const prev=box.querySelector('input[value="'+SC.ex+'"]'); if(prev) prev.checked=true;
+        openPro('«'+EX[k].name+'» es un ejercicio Premium. Con la versión gratuita tienes «'+EX[CONFIG.FREE_SCALES[0]].name+'».');
+        return;
+      }
+      SC.ex=k;SC.fillTonic();SC.tipText();
+    });
     $('#sc-bpm').addEventListener('input',e=>$('#sc-bpm-v').textContent=e.target.value);
     $('#sc-go').addEventListener('click',()=>SC.start());
     $('#sc-stop').addEventListener('click',()=>{SC.reset();SC.setPhase('Ejercicio parado',false);});
@@ -734,6 +868,7 @@ const SC={
     SC.fillTonic(); SC.tipText();
   },
   tipText(){$('#sc-tip').textContent=EX[SC.ex].tip;},
+  marks(){document.querySelectorAll('#sc-ex span[data-k]').forEach(sp=>{const k=sp.dataset.k;sp.innerHTML=esc(EX[k].name)+(scaleLocked(k)?'<span class="lockmark" aria-label="Premium">🔒</span>':'');});},
   fillTonic(){
     const sel=$('#sc-tonic'),prev=sel.value?+sel.value:null;
     const maxS=Math.max(...EX[SC.ex].steps);
@@ -924,10 +1059,14 @@ const PG={
       '<div><b>'+data.days.length+'</b><span>días practicados</span></div>';
     const h=$('#pg-hist');
     if(!data.sessions.length){h.innerHTML='<li class="empty">Aún no hay prácticas. Empieza por Imitar o Escalas.</li>';return;}
-    h.innerHTML=data.sessions.slice(0,12).map(x=>{
+    const lim=PRO.is()?30:CONFIG.FREE_HISTORY;
+    h.innerHTML=data.sessions.slice(0,lim).map(x=>{
       const d=new Date(x.ts);
       return '<li><div>'+esc(x.label)+'<br><span>'+d.toLocaleDateString('es-ES',{day:'numeric',month:'short'})+', '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})+'</span></div><b>'+x.score+'</b></li>';
-    }).join('');
+    }).join('')+(!PRO.is()&&data.sessions.length>lim?'<li class="more">Tienes '+(data.sessions.length-lim)+' prácticas más. <button type="button" data-pro>Ver historial completo con Premium</button></li>':'');
+    const mb=h.querySelector('[data-pro]'); if(mb) mb.addEventListener('click',()=>openPro('El historial completo es una función Premium.'));
+    $('#pro-box-text').textContent=PRO.is()?'Tienes Afina Premium activado. ¡Gracias por apoyar la app!':'Desbloquea todas las escalas y arpegios, practica Imitar sin límite y guarda tu historial completo.';
+    $('#pro-open').textContent=PRO.is()?'Gestionar Premium':'Ver Premium';
   }
 };
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
@@ -999,6 +1138,54 @@ addEventListener('pagehide',()=>{if(eng.on) stopMic();});
 const h0=location.hash.slice(1); if(views[h0]&&h0!=='tuner') go(h0);
 IM.hint(); RG.render();
 setStatus(false);
+
+/* ---------- Ventana Premium ---------- */
+const proEl=$('#pro');
+function setProMsg(t,kind){const m=$('#pro-msg');m.textContent=t||'';m.className='pro-msg'+(kind?' '+kind:'');}
+function renderPro(){
+  const on=PRO.is();
+  $('#pro-free').hidden=on; $('#pro-active').hidden=!on;
+  $('#pro-title').textContent=on?'Afina Premium':'Canta sin límites';
+  if(on){const k=data.premium.key;$('#pro-active-key').textContent='Clave: '+k.slice(0,4)+'••••'+k.slice(-4);}
+  const buy=$('#pro-buy');
+  if(CONFIG.CHECKOUT_URL){buy.href=CONFIG.CHECKOUT_URL;buy.classList.remove('disabled');buy.removeAttribute('aria-disabled');buy.textContent='Hazte Premium';}
+  else{buy.href='#';buy.classList.add('disabled');buy.setAttribute('aria-disabled','true');buy.textContent='Compra disponible muy pronto';}
+}
+let proReturn=null;
+function openPro(reason){
+  const r=$('#pro-reason'); r.hidden=!reason||PRO.is(); r.textContent=reason||'';
+  setProMsg(''); renderPro();
+  proReturn=document.activeElement;
+  proEl.hidden=false;
+  setTimeout(()=>{const f=PRO.is()?$('#pro-deactivate'):$('#pro-key');if(f&&!f.value)$('#pro-close').focus();},50);
+}
+function closePro(){proEl.hidden=true; if(proReturn&&proReturn.focus) proReturn.focus();}
+function refreshPro(){SC.marks();IM.hint();if(cur==='progress')PG.render();
+  if(scaleLocked(SC.ex)){SC.ex=CONFIG.FREE_SCALES[0];const i=document.querySelector('#sc-ex input[value="'+SC.ex+'"]');if(i)i.checked=true;SC.fillTonic();SC.tipText();}}
+$('#pro-close').addEventListener('click',closePro);
+proEl.addEventListener('click',e=>{if(e.target===proEl) closePro();});
+addEventListener('keydown',e=>{if(e.key==='Escape'&&!proEl.hidden) closePro();});
+$('#pro-open').addEventListener('click',()=>openPro());
+$('#pro-activate').addEventListener('click',async()=>{
+  const b=$('#pro-activate'),key=$('#pro-key').value;
+  if(!key.trim()){setProMsg('Pega primero la clave que recibiste por correo.','bad');return;}
+  b.disabled=true; b.textContent='Comprobando…'; setProMsg('');
+  const r=await PRO.activate(key);
+  b.disabled=false; b.textContent='Activar';
+  if(r.ok){$('#pro-key').value='';renderPro();$('#pro-reason').hidden=true;setProMsg('¡Premium activado! Ya tienes todo desbloqueado.','good');refreshPro();}
+  else setProMsg(r.error,'bad');
+});
+$('#pro-key').addEventListener('keydown',e=>{if(e.key==='Enter') $('#pro-activate').click();});
+$('#pro-deactivate').addEventListener('click',async()=>{
+  if(!confirm('¿Desactivar Premium en este dispositivo? Podrás activarlo de nuevo con la misma clave.')) return;
+  const b=$('#pro-deactivate'); b.disabled=true;
+  const r=await PRO.deactivate(); b.disabled=false;
+  if(r.ok){renderPro();setProMsg('Premium desactivado en este dispositivo.','');refreshPro();}
+  else setProMsg(r.error,'bad');
+});
+// Clave en el enlace (por ejemplo, desde el correo de compra): ?license_key=XXXX
+try{const q=new URLSearchParams(location.search).get('license_key'); if(q&&!PRO.is()){$('#pro-key').value=q; history.replaceState(null,'',location.pathname+location.hash); setTimeout(()=>openPro(),300);}}catch(e){}
+SC.marks(); PRO.recheck();
 
 /* ---------- App instalable (PWA) ---------- */
 const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
