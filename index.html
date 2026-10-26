@@ -229,6 +229,41 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surfa
 .rec-btns{display:flex;gap:6px}
 .opts{display:flex;flex-wrap:wrap;gap:4px 18px}
 
+/* Enganche */
+.tag-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.streak-chip{display:inline-block;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,var(--near) 20%,transparent);color:var(--near);font-weight:800;font-size:.85rem}
+.days i.done.s0{opacity:.3} .days i.done.s1{opacity:.5} .days i.done.s2{opacity:.75}
+.days i.ch{box-shadow:inset 0 0 0 2px var(--near)}
+.days i[role=button]{cursor:pointer}
+.days i[data-star]::after{content:"★";font-size:.55rem;margin-left:1px}
+.legend{margin:-8px 0 14px}
+.stars{font-size:2.6rem;letter-spacing:.08em;color:var(--near);line-height:1;margin-bottom:8px}
+.stars.s0{color:var(--muted)}
+.stars.pop{animation:pop .5s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{0%{transform:scale(.4);opacity:0}100%{transform:scale(1);opacity:1}}
+.toast{position:fixed;left:50%;top:calc(12px + env(safe-area-inset-top,0px));z-index:40;transform:translate(-50%,-140%);transition:transform .3s;display:flex;gap:12px;align-items:center;background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:calc(100% - 24px)}
+.toast.show{transform:translate(-50%,0)}
+.toast b{display:block;font-size:.8rem;opacity:.8}
+.t-icon{font-size:1.8rem}
+#confetti{position:fixed;inset:0;width:100%;height:100%;z-index:35;pointer-events:none}
+.cele-card{text-align:center}
+.cele-icon{font-size:4.5rem;line-height:1;animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
+.cele-card p{color:var(--muted)}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px;margin-top:12px}
+.ach{background:var(--surface-2);border-radius:14px;padding:10px 8px;text-align:center;font-size:.8rem;font-weight:700;line-height:1.2}
+.ach span{display:block;font-size:1.8rem;margin-bottom:4px}
+.ach.off{opacity:.38;filter:grayscale(1)}
+input[type=time]{min-height:52px;border-radius:12px;border:1px solid var(--line);background:var(--bg);padding:8px 12px;width:100%}
+.intro{z-index:30;background:var(--bg)}
+.intro h1{font-size:2rem}
+.intro p{color:var(--muted)}
+.intro-art{width:100%;height:auto;margin-bottom:6px}
+.intro-big{font-family:var(--display);font-weight:800;font-size:3.4rem;color:var(--brand);letter-spacing:-.03em}
+.intro-big span{color:var(--muted);font-size:.6em}
+.pager{display:flex;gap:8px;justify-content:center;margin-top:20px}
+.pager i{width:8px;height:8px;border-radius:50%;background:var(--line)}
+.pager i.on{background:var(--brand);width:22px;border-radius:4px}
+
 /* Precio y panel */
 .price{display:flex;flex-direction:column;align-items:flex-start;gap:2px;margin-top:16px}
 .price b{font-family:var(--display);font-size:2.6rem;font-weight:800;line-height:1}
@@ -282,10 +317,11 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
   <!-- HOY: PROGRAMA DE 30 DÍAS -->
   <section class="view active" id="v-today" aria-labelledby="td-title">
     <div id="td-home">
-      <span class="week-tag" id="td-week"></span>
+      <div class="tag-row"><span class="week-tag" id="td-week"></span><span class="streak-chip" id="td-streak" hidden></span></div>
       <h2 id="td-title" style="margin-top:10px"></h2>
       <p class="lede" id="td-text"></p>
-      <div class="days" id="td-days" aria-hidden="true"></div>
+      <div class="days" id="td-days" aria-label="Calendario de 30 días"></div>
+      <p class="small-label legend">Toca un día completado para repetirlo y conseguir más estrellas. Los días con borde son retos.</p>
       <div class="panel">
         <div class="small-label" id="td-card-kicker"></div>
         <h3 id="td-card-title" style="font-size:1.4rem;margin-top:4px"></h3>
@@ -327,6 +363,7 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
       <span class="week-tag" id="td-done-tag"></span>
       <h2 style="margin-top:10px" id="td-done-title">¡Sesión completada!</h2>
       <div class="panel" style="margin-top:16px">
+        <div class="stars" id="td-done-stars" hidden aria-label="Estrellas conseguidas"></div>
         <div class="score"><b id="td-done-score"></b><span id="td-done-unit">puntos de media</span></div>
         <p id="td-done-level" style="margin-top:8px"></p>
         <div id="td-done-metrics"></div>
@@ -334,7 +371,12 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
         <div class="coach" id="td-done-coach"></div>
       </div>
       <div class="panel" id="td-done-pro" style="margin-top:14px" hidden></div>
-      <div class="actions"><button class="btn primary big" id="td-back" type="button">Volver al plan</button></div>
+      <div class="actions">
+        <button class="btn primary big" id="td-repeat" type="button" hidden>Repetir el día</button>
+        <button class="btn primary big" id="td-share" type="button" hidden>Compartir mi resultado</button>
+        <button class="btn primary big" id="td-back" type="button">Volver al plan</button>
+        <button class="btn small" id="td-continue" type="button" hidden>Seguir igualmente</button>
+      </div>
     </div>
   </section>
 
@@ -493,6 +535,19 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
       <div class="week" id="pg-week"></div>
     </div>
     <div class="stats" style="margin-top:14px" id="pg-stats"></div>
+    <div class="panel" style="margin-top:14px">
+      <h3 style="font-size:1.2rem">Logros <span class="small-label" id="pg-ach-n"></span></h3>
+      <div class="ach-grid" id="pg-ach"></div>
+    </div>
+    <div class="panel" style="margin-top:14px">
+      <h3 style="font-size:1.2rem">Recordatorio diario</h3>
+      <p class="hint" style="margin-top:6px">Elige una hora y Afina se añadirá a tu calendario durante 30 días, con aviso. Las webs no pueden enviar notificaciones diarias por sí solas, así que usamos tu calendario.</p>
+      <div class="actions" style="align-items:flex-end">
+        <div class="field" style="flex:0 1 140px"><label for="rm-time">Hora</label><input type="time" id="rm-time" value="20:00"></div>
+        <button class="btn" id="rm-add" type="button">Añadir a mi calendario</button>
+      </div>
+      <p class="pro-msg good" id="rm-msg" role="status"></p>
+    </div>
     <div class="actions"><button class="btn" id="pg-range" type="button">Medir o ajustar mi rango vocal</button></div>
     <div class="panel" id="pro-box" style="margin-top:14px">
       <span class="pro-tag">PREMIUM</span>
@@ -527,6 +582,42 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
     <button class="btn primary big" id="gate-btn" type="button">Empezar</button>
     <p class="fine">Funciona mejor con auriculares y en un sitio tranquilo. El sonido se analiza en tu dispositivo y no se envía a ningún sitio.</p>
     <div class="err" id="gate-err" hidden></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+<canvas id="confetti" aria-hidden="true" hidden></canvas>
+<div class="gate" id="cele" role="dialog" aria-modal="true" aria-labelledby="cele-title" hidden>
+  <div class="gate-card cele-card">
+    <div class="cele-icon" id="cele-icon" aria-hidden="true"></div>
+    <h1 id="cele-title"></h1>
+    <p id="cele-text"></p>
+    <button class="btn primary big" id="cele-ok" type="button">¡Seguir!</button>
+  </div>
+</div>
+<div class="gate intro" id="intro" role="dialog" aria-modal="true" aria-label="Bienvenida" hidden>
+  <div class="gate-card">
+    <div class="slide">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--brand)"/><path d="M5 17c2.5-6 4-6 5.5 0s3 6 5 0 3-6 5 0 3 6 6 0" fill="none" stroke="var(--brand-ink)" stroke-width="2.6" stroke-linecap="round"/></svg>
+      <h1>Canta afinado en 30 días</h1>
+      <p>Diez minutos al día. Sin saber música y sin profesor. Afina te escucha y te guía paso a paso.</p>
+    </div>
+    <div class="slide" hidden>
+      <svg viewBox="0 0 300 120" class="intro-art" aria-hidden="true"><rect x="10" y="10" width="280" height="100" rx="14" fill="var(--surface-2)"/>
+        <rect x="120" y="46" width="160" height="18" rx="6" fill="var(--target)"/>
+        <path d="M24 92 C60 86,80 70,110 58 S150 54,170 55 S230 56,276 55" fill="none" stroke="var(--brand)" stroke-width="5" stroke-linecap="round"/>
+        <path d="M150 55 S230 56,276 55" fill="none" stroke="var(--ok)" stroke-width="5" stroke-linecap="round"/></svg>
+      <h1>Ves tu voz en directo</h1>
+      <p>Canta y la línea te muestra si estás en la nota: verde cuando aciertas. Cada día, una sesión corta que se adapta a tu nivel, con canciones, estrellas y retos.</p>
+    </div>
+    <div class="slide" hidden>
+      <div class="intro-big" aria-hidden="true">43 <span>→</span> 68</div>
+      <h1>Mide tu progreso</h1>
+      <p>Empiezas con una prueba de voz de 4 minutos y la repites el día 30 para ver cuánto has mejorado. Tu voz nunca sale de tu dispositivo.</p>
+    </div>
+    <div class="pager" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
+    <button class="btn primary big" id="intro-next" type="button" style="width:100%;margin-top:18px">Siguiente</button>
+    <button class="btn small" id="intro-skip" type="button" style="width:100%;margin-top:8px;border:0;background:none">Saltar</button>
   </div>
 </div>
 
@@ -1240,6 +1331,10 @@ const PG={
       '<div><b>'+(hasRange()?nTxt(data.range.low)+'–'+nTxt(data.range.high):'—')+'</b><span>rango vocal</span></div>'+
       '<div><b>'+data.days.length+'</b><span>días practicados</span></div>'+
       (data.program?'<div><b>'+Math.min(data.program.day,TOTAL_DAYS)+'/'+TOTAL_DAYS+'</b><span>día del programa</span></div><div><b>'+(data.program.tests.final||data.program.tests.initial||{overall:'—'}).overall+'</b><span>puntuación de voz</span></div>':'');
+    const got=data.ach||{};
+    $('#pg-ach-n').textContent=Object.keys(got).length+' de '+ACH.length;
+    $('#pg-ach').innerHTML=ACH.map(a=>'<div class="ach'+(got[a.id]?'':' off')+'" title="'+esc(a.desc)+'"><span>'+a.icon+'</span>'+esc(a.name)+'</div>').join('');
+    if(data.reminder) $('#rm-time').value=data.reminder;
     const h=$('#pg-hist');
     if(!data.sessions.length){h.innerHTML='<li class="empty">Aún no hay prácticas. Empieza por Imitar o Escalas.</li>';return;}
     const lim=PRO.is()?30:CONFIG.FREE_HISTORY;
@@ -1456,6 +1551,7 @@ const POOLS={
 function dayItems(d){
   const w=weekOf(d), j=d-w.from, pool=POOLS[w.n], n=pool.length;
   const list=w.n<=2?EASY_SONGS:SONGS.map(x=>x.id);
+  if(d===7||d===14||d===21) return [WARMS[0],pool[0],pool[2],pool[4],IT.melody(list[w.n%list.length],false)];
   return [WARMS[(j+Math.floor(j/3))%3], pool[j%n], pool[(j+2)%n], IT.melody(list[(j*3+w.n)%list.length],w.n===1)];
 }
 function testItems(){
@@ -1807,8 +1903,13 @@ const RN={
       $('#td-done-unit').textContent='puntos de media';
     }
     $('#td-done-score').textContent=shown;
-    if(d>=P.day) P.day=Math.min(TOTAL_DAYS+1,d+1);
-    P.log.push({day:d,score:shown,afin:RN.sess.test?(P.tests[d===1?'initial':'final']||{}).afin:afin,ts:Date.now(),test:!!RN.sess.test});
+    const stars=RN.sess.test?null:starsFor(avg), ch=isChallenge(d)&&!RN.sess.test, wasCurrent=d>=P.day;
+    let advance=RN.sess.test||(!ch&&stars>=1), chs=null;
+    if(ch){P.ch=P.ch||{}; chs=P.ch[d]||{tries:0,best:0,passed:false}; chs.tries++; chs.best=Math.max(chs.best,avg); chs.passed=chs.passed||avg>=CH_MIN; P.ch[d]=chs; advance=avg>=CH_MIN;}
+    if(stars!=null){P.stars=P.stars||{}; P.stars[d]=Math.max(P.stars[d]||0,stars);}
+    if(advance&&wasCurrent) P.day=Math.min(TOTAL_DAYS+1,d+1);
+    RN.lastDay=d;
+    P.log.push({day:d,score:shown,stars,afin:RN.sess.test?(P.tests[d===1?'initial':'final']||{}).afin:afin,ts:Date.now(),test:!!RN.sess.test});
     save();
     record('program',shown,(RN.sess.test?'Prueba de voz, día ':'Programa, día ')+d);
     $('#td-done-tag').textContent='Día '+d+' de '+TOTAL_DAYS;
@@ -1830,7 +1931,45 @@ const RN={
       box.hidden=false;
       $('#td-unlock').onclick=()=>openPro('Llevas 3 de 30 días. Desbloquea el programa completo y llega a tu prueba final.');
     }else box.hidden=true;
+    // Estrellas y botones según el resultado
+    const sEl=$('#td-done-stars'); sEl.hidden=stars==null;
+    if(stars!=null){sEl.textContent=starTxt(stars); sEl.className='stars pop s'+stars;}
+    const rep=$('#td-repeat'),cont=$('#td-continue'),back=$('#td-back'),shr=$('#td-share');
+    rep.hidden=true; cont.hidden=true; back.hidden=false; back.className='btn primary big'; cont.className='btn big';
+    shr.hidden=!RN.sess.test;
+    if(ch&&avg>=CH_MIN) $('#td-done-title').textContent='¡Reto superado!';
+    else if(ch&&wasCurrent){
+      $('#td-done-title').textContent=chs.tries<CH_TRIES?'Casi lo tienes':'Buen esfuerzo';
+      $('#td-done-level').textContent=(chs.tries<CH_TRIES?'Necesitas '+CH_MIN+' puntos de media para superar el reto. Intento '+chs.tries+' de '+CH_TRIES+'. ':'Has hecho '+chs.tries+' intentos. Puedes pasar a la semana siguiente; repasa los ejercicios que más te han costado. ')+$('#td-done-level').textContent;
+      rep.hidden=false; rep.textContent='Intentarlo de nuevo'; rep.className=chs.tries<CH_TRIES?'btn primary big':'btn big';
+      if(chs.tries>=CH_TRIES){cont.hidden=false; cont.textContent='Seguir a la semana '+(weekOf(d).n+1); cont.className='btn primary big';}
+      back.className='btn big';
+    }else if(!RN.sess.test&&stars===0&&wasCurrent){
+      $('#td-done-title').textContent='Te ha faltado poco';
+      $('#td-done-level').textContent='Con 50 puntos ganas tu primera estrella. Te recomendamos repetir el día: la segunda vez suele salir mucho mejor. '+$('#td-done-level').textContent;
+      rep.hidden=false; rep.textContent='Repetir el día'; rep.className='btn primary big';
+      cont.hidden=false; cont.textContent='Seguir igualmente'; cont.className='btn small';
+      back.hidden=true;
+    }
     $('#td-run').hidden=true; $('#td-done').hidden=false; window.scrollTo(0,0);
+    // Logros y celebraciones
+    const un=['first'];
+    if(stars===3) un.push('three');
+    if(RN.res.some(r=>r&&!r.rhythm&&!r.range&&r.score>=95)) un.push('perfect');
+    if(P.level>=5) un.push('level5');
+    if(ch&&avg>=CH_MIN) un.push('w'+weekOf(d).n);
+    if(d===TOTAL_DAYS) un.push('done30');
+    if(P.tests.initial&&hasRange()&&(data.range.high-data.range.low)-P.tests.initial.range>=2) un.push('range');
+    const sk=PG.streak(); if(sk>=3) un.push('streak3'); if(sk>=7) un.push('streak7'); if(sk>=14) un.push('streak14');
+    const firstEver=!(data.ach&&data.ach.first);
+    setTimeout(()=>{
+      if([3,7,14,21,30].includes(sk)&&data.celebrated!==today()){data.celebrated=today();save();celebrate('🔥',sk+' días seguidos','¡Qué constancia! Así es como mejora la voz de verdad.');}
+      else if(ch&&avg>=CH_MIN) celebrate(['🥉','🥈','🥇'][weekOf(d).n-1]||'🏅','¡Reto de la semana '+weekOf(d).n+' superado!','Pasas a la semana '+(weekOf(d).n+1)+'. Cada vez cantas mejor.');
+      else if(d===TOTAL_DAYS&&RN.sess.test) celebrate('🏆','¡Has completado los 30 días!','Mira tu mejora y compártela con quien quieras.');
+      else if(firstEver) celebrate('🎤','¡Primer día completado!','Has dado el paso más difícil: empezar. Mañana, a por más.');
+      else if(stars===3) confetti();
+      unlock(un);
+    },350);
   }
 };
 function metricsBlock(T,ini){
@@ -1845,16 +1984,33 @@ $('#td-skip').addEventListener('click',RN.onSkip);
 $('#td-exit').addEventListener('click',RN.exit);
 $('#td-back').addEventListener('click',()=>{$('#td-done').hidden=true;TD.render();});
 
+/* ---------- Estrellas, retos y días ---------- */
+const CH_MIN=60, CH_TRIES=3;
+const isChallenge=d=>d===7||d===14||d===21;
+const starsFor=s=>s>=85?3:s>=70?2:s>=50?1:0;
+const starTxt=n=>'★'.repeat(n)+'☆'.repeat(3-n);
+
 const TD={
   enter(){if(!$('#td-run').hidden){RN.g.resize();return;} if($('#td-done').hidden) TD.render();},
   onFrame(fr){RN.onFrame(fr);},
   render(){
-    const P=prog(), d=Math.min(P.day,TOTAL_DAYS), finished=P.day>TOTAL_DAYS;
+    const P=prog(), d=Math.min(P.day,TOTAL_DAYS), finished=P.day>TOTAL_DAYS, ST=P.stars||{};
     $('#td-home').hidden=false; $('#td-run').hidden=true; $('#td-done').hidden=true;
     const dots=$('#td-days'); dots.innerHTML='';
-    for(let i=1;i<=TOTAL_DAYS;i++){const el=document.createElement('i');el.textContent=i;
-      if(i<P.day) el.className='done'; else if(i===d&&!finished) el.className='now';
-      if(isTestDay(i)) el.classList.add('test'); dots.appendChild(el);}
+    for(let i=1;i<=TOTAL_DAYS;i++){
+      const el=document.createElement('i'); el.textContent=i;
+      if(i<P.day){el.className='done s'+(ST[i]||(isTestDay(i)?3:1)); if(ST[i]===3) el.dataset.star='★';}
+      else if(i===d&&!finished) el.className='now';
+      if(isTestDay(i)) el.classList.add('test');
+      if(isChallenge(i)) el.classList.add('ch');
+      const can=(i<P.day&&!isTestDay(i))||(i===d&&!finished);
+      if(can){el.setAttribute('role','button');el.tabIndex=0;el.setAttribute('aria-label',(i===d?'Empezar día ':'Repetir día ')+i);
+        const fn=()=>i===d&&!finished?TD.start():TD.startDay(i);
+        el.addEventListener('click',fn); el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fn();}});}
+      dots.appendChild(el);
+    }
+    const s=PG.streak();
+    $('#td-streak').hidden=s<1; $('#td-streak').textContent='🔥 '+s+(s===1?' día':' días');
     if(finished){
       $('#td-week').textContent='Programa completado';
       $('#td-title').textContent='¡Has terminado los 30 días!';
@@ -1865,28 +2021,34 @@ const TD={
       $('#td-coach').innerHTML='<b>Consejo de tu entrenador</b>La constancia es lo que más mejora la voz: unos minutos al día valen más que una sesión larga a la semana.';
       $('#td-start').textContent='Repetir programa';
     }else{
-      const test=isTestDay(d), w=weekOf(d);
+      const test=isTestDay(d), w=weekOf(d), ch=isChallenge(d), c=(P.ch||{})[d];
       $('#td-week').textContent=test?(d===1?'Antes de empezar':'Último día'):'Semana '+w.n+' · Nivel '+P.level;
-      $('#td-title').textContent=test?(d===1?'Afina en 30 días':'Prueba de voz final'):w.title;
-      $('#td-text').textContent=test?(d===1?'Un programa de 10 minutos al día para pasar de no saber cantar a cantar afinado. Empezamos midiendo tu voz.':'Repite la prueba del primer día y descubre cuánto has mejorado.'):w.text;
-      $('#td-card-kicker').textContent='Día '+d+' de '+TOTAL_DAYS+(test?' · unos 4 minutos':' · unos 6 minutos');
-      $('#td-card-title').textContent=test?(d===1?'Prueba de voz inicial':'Prueba de voz final'):'Sesión de hoy';
+      $('#td-title').textContent=test?(d===1?'Afina en 30 días':'Prueba de voz final'):ch?'Reto de la semana '+w.n:w.title;
+      $('#td-text').textContent=test?(d===1?'Un programa de 10 minutos al día para pasar de no saber cantar a cantar afinado. Empezamos midiendo tu voz.':'Repite la prueba del primer día y descubre cuánto has mejorado.')
+        :ch?'Demuestra lo que has aprendido esta semana para pasar a la siguiente.':w.text;
+      $('#td-card-kicker').textContent='Día '+d+' de '+TOTAL_DAYS+(test?' · unos 4 minutos':ch?' · reto':' · unos 6 minutos');
+      $('#td-card-title').textContent=test?(d===1?'Prueba de voz inicial':'Prueba de voz final'):ch?'Reto: '+CH_MIN+' puntos para pasar':'Sesión de hoy';
       $('#td-card-list').innerHTML=(test?testItems():dayItems(d)).map(it=>'<li>'+esc(it.label)+'</li>').join('');
-      $('#td-coach').innerHTML='<b>Consejo de tu entrenador</b>'+esc(test?TEST_TIP:w.tip);
+      $('#td-coach').innerHTML='<b>Consejo de tu entrenador</b>'+esc(test?TEST_TIP:ch?'Necesitas '+CH_MIN+' puntos de media para pasar a la semana '+(w.n+1)+'. Tienes '+CH_TRIES+' intentos'+(c?' (llevas '+c.tries+', tu mejor: '+c.best+')':'')+'; después podrás seguir igualmente. Respira y ve con calma.':w.tip);
       const locked=d>FREE_DAYS&&!PRO.is();
-      $('#td-start').textContent=locked?'Desbloquear el programa completo':(test?'Empezar la prueba':'Empezar sesión');
+      $('#td-start').textContent=locked?'Desbloquear el programa completo':(test?'Empezar la prueba':ch?'Empezar el reto':'Empezar sesión');
     }
     const tb=$('#td-tests'), ini=P.tests.initial, fin=P.tests.final;
-    if(ini){tb.hidden=false; tb.innerHTML='<h3 style="font-size:1.2rem">'+(fin?'Tu mejora':'Tu punto de partida')+'</h3>'+metricsBlock(fin||ini,fin?ini:null);}
+    if(ini){tb.hidden=false; tb.innerHTML='<h3 style="font-size:1.2rem">'+(fin?'Tu mejora':'Tu punto de partida')+'</h3>'+metricsBlock(fin||ini,fin?ini:null)+
+      '<div class="actions"><button class="btn" type="button" id="td-share-test">Compartir mi resultado</button></div>';
+      $('#td-share-test').onclick=()=>shareCard();}
     else tb.hidden=true;
   },
   start(){
     const P=prog();
     if(P.day>TOTAL_DAYS){
       if(!PRO.is()){openPro('Repetir el programa es una función Premium.');return;}
-      P.day=2; save(); TD.render(); return;
+      P.day=2; P.stars={}; P.ch={}; save(); TD.render(); return;
     }
-    const d=P.day;
+    TD.startDay(P.day);
+  },
+  startDay(d){
+    const P=prog();
     if(d>FREE_DAYS&&!PRO.is()){openPro('Has completado tus '+FREE_DAYS+' días gratis. Desbloquea los 30 días del programa para seguir mejorando.');return;}
     if(!eng.on){showGate('paused');return;}
     const test=isTestDay(d);
@@ -1894,7 +2056,131 @@ const TD={
   }
 };
 $('#td-start').addEventListener('click',TD.start);
+$('#td-repeat').addEventListener('click',()=>{$('#td-done').hidden=true;TD.startDay(RN.lastDay);});
+$('#td-continue').addEventListener('click',()=>{const P=prog(); if(RN.lastDay>=P.day){P.day=Math.min(TOTAL_DAYS+1,RN.lastDay+1); save();} $('#td-done').hidden=true; TD.render();});
+$('#td-share').addEventListener('click',()=>shareCard());
 $('#pg-range').addEventListener('click',()=>go('range'));
+
+/* ---------- Logros ---------- */
+const ACH=[
+  {id:'first',icon:'🎤',name:'Primera sesión',desc:'Completa tu primera sesión.'},
+  {id:'perfect',icon:'🎯',name:'Nota perfecta',desc:'Saca 95 o más en un ejercicio o canción.'},
+  {id:'three',icon:'⭐',name:'Tres estrellas',desc:'Consigue 3 estrellas en una sesión.'},
+  {id:'streak3',icon:'🔥',name:'Tres días seguidos',desc:'Practica 3 días seguidos.'},
+  {id:'streak7',icon:'🔥',name:'Una semana sin fallar',desc:'Practica 7 días seguidos.'},
+  {id:'streak14',icon:'🔥',name:'Dos semanas',desc:'Practica 14 días seguidos.'},
+  {id:'w1',icon:'🥉',name:'Reto semana 1',desc:'Supera el reto del día 7.'},
+  {id:'w2',icon:'🥈',name:'Reto semana 2',desc:'Supera el reto del día 14.'},
+  {id:'w3',icon:'🥇',name:'Reto semana 3',desc:'Supera el reto del día 21.'},
+  {id:'range',icon:'📏',name:'Rango ampliado',desc:'Amplía tu rango 2 semitonos respecto a la prueba inicial.'},
+  {id:'songs5',icon:'🎶',name:'Repertorio',desc:'Canta 5 canciones distintas.'},
+  {id:'level5',icon:'🚀',name:'Nivel 5',desc:'Llega al nivel 5 del programa.'},
+  {id:'done30',icon:'🏆',name:'30 días',desc:'Completa el programa entero.'}
+];
+const toastQ=[]; let toastBusy=false;
+function unlock(ids){
+  data.ach=data.ach||{}; let any=false;
+  ids.forEach(id=>{if(!data.ach[id]&&ACH.find(a=>a.id===id)){data.ach[id]=Date.now();any=true;toastQ.push(id);}});
+  if(any){save(); nextToast();}
+}
+function nextToast(){
+  if(toastBusy||!toastQ.length) return;
+  toastBusy=true; const a=ACH.find(x=>x.id===toastQ.shift()), el=$('#toast');
+  el.innerHTML='<span class="t-icon">'+a.icon+'</span><span><b>¡Logro desbloqueado!</b>'+esc(a.name)+'</span>';
+  el.hidden=false; requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{el.classList.remove('show'); setTimeout(()=>{el.hidden=true; toastBusy=false; nextToast();},300);},2600);
+}
+
+/* ---------- Celebraciones ---------- */
+function confetti(){
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const cv=$('#confetti'), c=cv.getContext('2d'), d=devicePixelRatio||1;
+  cv.width=innerWidth*d; cv.height=innerHeight*d; cv.hidden=false; c.setTransform(d,0,0,d,0,0);
+  const cols=[C.brand,C.ok,C.near,C.off,'#ffffff'];
+  const ps=Array.from({length:140},()=>({x:innerWidth/2+(Math.random()-.5)*80,y:innerHeight*0.35,vx:(Math.random()-.5)*13,vy:-Math.random()*13-4,s:5+Math.random()*6,r:Math.random()*6,vr:(Math.random()-.5)*.3,col:cols[Math.floor(Math.random()*cols.length)]}));
+  const t0=performance.now();
+  (function f(t){
+    const k=(t-t0)/2400; c.clearRect(0,0,innerWidth,innerHeight);
+    ps.forEach(p=>{p.vy+=0.32;p.x+=p.vx;p.y+=p.vy;p.vx*=0.99;p.r+=p.vr;c.save();c.globalAlpha=Math.max(0,1-k);c.translate(p.x,p.y);c.rotate(p.r);c.fillStyle=p.col;c.fillRect(-p.s/2,-p.s/4,p.s,p.s/2);c.restore();});
+    if(k<1) requestAnimationFrame(f); else {c.clearRect(0,0,innerWidth,innerHeight); cv.hidden=true;}
+  })(t0);
+}
+function celebrate(icon,title,text){
+  $('#cele-icon').textContent=icon; $('#cele-title').textContent=title; $('#cele-text').textContent=text;
+  $('#cele').hidden=false; confetti(); setTimeout(()=>$('#cele-ok').focus(),50);
+}
+$('#cele-ok').addEventListener('click',()=>$('#cele').hidden=true);
+
+/* ---------- Tarjeta para compartir ---------- */
+async function shareCard(){
+  const P=prog(), ini=P.tests.initial, fin=P.tests.final; if(!ini) return;
+  try{await document.fonts.ready;}catch(e){}
+  const W=1080,H=1350,cv=document.createElement('canvas'); cv.width=W; cv.height=H; const c=cv.getContext('2d');
+  const g=c.createLinearGradient(0,0,W,H); g.addColorStop(0,'#4B2FCF'); g.addColorStop(1,'#6E4BFF'); c.fillStyle=g; c.fillRect(0,0,W,H);
+  c.strokeStyle='#fff'; c.lineWidth=14; c.lineCap='round'; c.beginPath();
+  for(let i=0;i<=200;i++){const x=90+i*1.1, y=150-Math.sin(i/200*Math.PI*4)*34; i?c.lineTo(x,y):c.moveTo(x,y);} c.stroke();
+  c.fillStyle='#fff'; c.font='800 92px "Bricolage Grotesque", sans-serif'; c.fillText('Afina',340,182);
+  c.font='700 54px "Bricolage Grotesque", sans-serif';
+  c.fillText(fin?'Mi voz después de 30 días':'Empiezo a entrenar mi voz',90,360);
+  if(fin){
+    c.font='800 240px "Bricolage Grotesque", sans-serif'; c.fillText(String(ini.overall),90,660);
+    let xx=90+c.measureText(String(ini.overall)).width+36;
+    c.font='700 110px "Bricolage Grotesque", sans-serif'; c.fillText('→',xx,625); xx+=c.measureText('→').width+36;
+    c.font='800 240px "Bricolage Grotesque", sans-serif'; c.fillStyle='#7CF5CF'; c.fillText(String(fin.overall),xx,660);
+    const dl=fin.overall-ini.overall; c.fillStyle='#fff'; c.font='700 58px "Atkinson Hyperlegible", sans-serif';
+    c.fillText((dl>=0?'+':'')+dl+' puntos de puntuación de voz',90,760);
+  }else{
+    c.font='800 300px "Bricolage Grotesque", sans-serif'; c.fillText(String(ini.overall),90,680);
+    c.font='700 58px "Atkinson Hyperlegible", sans-serif'; c.fillText('es mi punto de partida.',90,770); c.fillText('¡Empiezo el reto de 30 días!',90,840);
+  }
+  const T=fin||ini, rows=[['Afinación',T.afin,ini.afin],['Estabilidad',T.estab,ini.estab],['Oído',T.oido,ini.oido]];
+  c.font='700 46px "Atkinson Hyperlegible", sans-serif';
+  rows.forEach((r,i)=>{const y=(fin?900:960)+i*86; c.fillStyle='rgba(255,255,255,.75)'; c.fillText(r[0],90,y); c.fillStyle='#fff'; c.fillText(fin?r[2]+' → '+r[1]:String(r[1]),560,y);});
+  c.fillStyle='rgba(255,255,255,.85)'; c.font='400 40px "Atkinson Hyperlegible", sans-serif';
+  c.fillText('Aprende a cantar afinado en 30 días',90,H-150);
+  c.font='700 40px "Atkinson Hyperlegible", sans-serif'; c.fillText(location.host+location.pathname.replace(/index\.html.*$/,''),90,H-90);
+  const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+  const file=new File([blob],'afina-mi-voz.png',{type:'image/png'});
+  const text=fin?'He mejorado mi voz de '+ini.overall+' a '+fin.overall+' en 30 días con Afina 🎤':'Empiezo el reto de 30 días para cantar afinado con Afina 🎤';
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:text+' '+location.origin+location.pathname});return;}
+  }catch(e){if(e&&e.name==='AbortError') return;}
+  const u=URL.createObjectURL(blob), a=document.createElement('a'); a.href=u; a.download='afina-mi-voz.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),4000);
+}
+
+/* ---------- Recordatorio en el calendario ---------- */
+function addReminder(){
+  const [hh,mm]=($('#rm-time').value||'20:00').split(':').map(Number);
+  const now=new Date(), st=new Date(now.getFullYear(),now.getMonth(),now.getDate(),hh,mm);
+  if(st<now) st.setDate(st.getDate()+1);
+  const p=n=>String(n).padStart(2,'0');
+  const loc=d=>d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'T'+p(d.getHours())+p(d.getMinutes())+'00';
+  const utc=new Date().toISOString().replace(/[-:]/g,'').replace(/\.\d+/,'');
+  const url=location.origin+location.pathname;
+  const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Afina//ES','CALSCALE:GREGORIAN','METHOD:PUBLISH','BEGIN:VEVENT',
+    'UID:afina-'+Date.now()+'@afina','DTSTAMP:'+utc,'DTSTART:'+loc(st),'DURATION:PT10M','RRULE:FREQ=DAILY;COUNT=30',
+    'SUMMARY:🎤 Afina: tu sesión de hoy','DESCRIPTION:10 minutos para tu voz. Abre Afina: '+url,'URL:'+url,
+    'BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:Hora de cantar con Afina','END:VALARM','END:VEVENT','END:VCALENDAR'].join('\r\n');
+  const blob=new Blob([ics],{type:'text/calendar;charset=utf-8'}), u=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=u; a.download='afina-recordatorio.ics'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(u),5000);
+  data.reminder=$('#rm-time').value; save();
+  $('#rm-msg').textContent='Abre el archivo descargado y pulsa «Añadir» para guardarlo en tu calendario.';
+}
+$('#rm-add').addEventListener('click',addReminder);
+
+/* ---------- Bienvenida ---------- */
+const INTRO={
+  i:0,
+  show(){$('#intro').hidden=false; INTRO.go(0);},
+  go(i){INTRO.i=i; document.querySelectorAll('.slide').forEach((s,k)=>s.hidden=k!==i);
+    document.querySelectorAll('.pager i').forEach((p,k)=>p.classList.toggle('on',k===i));
+    $('#intro-next').textContent=i===2?'Empezar':'Siguiente'; $('#intro-skip').hidden=i===2;},
+  done(){data.onboarded=true; save(); $('#intro').hidden=true;}
+};
+$('#intro-next').addEventListener('click',()=>INTRO.i<2?INTRO.go(INTRO.i+1):INTRO.done());
+$('#intro-skip').addEventListener('click',INTRO.done);
+
 
 /* ---------- Grabaciones guardadas en el dispositivo (IndexedDB) ---------- */
 const DB={
@@ -2045,6 +2331,9 @@ const SG={
       data.songs=data.songs||{}; const st=data.songs[s.id]||{best:0,plays:0};
       st.plays++; const isBest=r.score>st.best; if(isBest) st.best=r.score; data.songs[s.id]=st; save();
       record('songs',r.score,'Canción: '+s.name);
+      const un=[]; if(Object.keys(data.songs).length>=5) un.push('songs5'); if(r.score>=95) un.push('perfect');
+      const sk=PG.streak(); if(sk>=3) un.push('streak3'); if(sk>=7) un.push('streak7'); if(sk>=14) un.push('streak14');
+      setTimeout(()=>unlock(un),300);
       $('#sg-best').textContent=isBest&&st.plays>1?'¡Nuevo récord!':'Tu mejor marca: '+st.best;
     }else $('#sg-best').textContent='';
     $('#sg-score').textContent=r.score;
@@ -2152,6 +2441,7 @@ addEventListener('pagehide',()=>{if(eng.on) stopMic();});
 // Vista inicial desde el enlace
 const h0=location.hash.slice(1); if(views[h0]&&h0!==cur) go(h0);
 IM.hint(); RG.render(); if(cur==='today') TD.render();
+if(!data.onboarded&&!(data.program&&data.program.log&&data.program.log.length)) INTRO.show();
 setStatus(false);
 
 /* ---------- Ventana Premium ---------- */
@@ -2214,7 +2504,7 @@ try{const q=new URLSearchParams(location.search).get('license_key'); if(q&&!PRO.
 SC.marks(); PRO.recheck();
 
 /* ---------- Panel interno (5 toques en el logo) ---------- */
-const APP_VERSION='1.4';
+const APP_VERSION='1.6';
 let taps=[];
 $('.brand').addEventListener('click',()=>{const t=Date.now();taps=taps.filter(x=>t-x<2500);taps.push(t);if(taps.length>=5){taps=[];openStats();}});
 function statsData(){
