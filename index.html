@@ -6,6 +6,7 @@
 <meta name="theme-color" content="#4B2FCF">
 <meta name="description" content="Aprende a cantar afinado: afinador, ejercicios, escalas y rango vocal.">
 <link rel="manifest" href="manifest.webmanifest">
+<script data-goatcounter="https://iadeveloper19.goatcounter.com/count" async src="https://gc.zgo.at/count.js"></script>
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -680,6 +681,17 @@ const nHtml=m=>NOTE[pc(m)]+'<span class="oct">'+octOf(m)+'</span>';
 const m2f=m=>440*Math.pow(2,(m-69)/12);
 const f2m=f=>69+12*Math.log2(f/440);
 
+/* ---------- Estadísticas anónimas (GoatCounter, sin cookies) ---------- */
+const trackQ=[];
+function track(name){
+  trackQ.push(name); flushTrack();
+}
+function flushTrack(){
+  const gc=window.goatcounter;
+  if(!gc||!gc.count){ if(!flushTrack.t) flushTrack.t=setTimeout(()=>{flushTrack.t=null;flushTrack();},2500); return; }
+  while(trackQ.length){const n=trackQ.shift(); try{gc.count({path:n,title:n,event:true});}catch(e){}}
+}
+
 /* ---------- Almacenamiento ---------- */
 const KEY='afina:v1';
 const blank=()=>({range:{low:null,high:null},sessions:[],days:[],best:{imitate:0,scales:0}});
@@ -737,6 +749,7 @@ const PRO={
     key=key.trim();
     if(CONFIG.TESTER_CODES.map(c=>c.toUpperCase()).includes(key.toUpperCase())){
       data.tester={code:key.toUpperCase(),from:Date.now(),until:Date.now()+CONFIG.TESTER_DAYS*864e5};
+      track('codigo-probador');
       save(); return {ok:true,tester:true};
     }
     if(!/^[A-Za-z0-9-]{8,}$/.test(key)) return {error:'Esa clave no tiene el formato correcto. Cópiala tal cual aparece en el correo de compra.'};
@@ -859,6 +872,7 @@ async function startMic(){
   gateBtn.disabled=false;
   setStatus(true);
   gate.hidden=true;
+  if(!startMic.counted){startMic.counted=true; track('micro-activado');}
   graphs.forEach(g=>g.resize());
   if(views[cur].enter) views[cur].enter();
   tick();
@@ -1912,6 +1926,7 @@ const RN={
     P.log.push({day:d,score:shown,stars,afin:RN.sess.test?(P.tests[d===1?'initial':'final']||{}).afin:afin,ts:Date.now(),test:!!RN.sess.test});
     save();
     record('program',shown,(RN.sess.test?'Prueba de voz, día ':'Programa, día ')+d);
+    track(RN.sess.test?(d===1?'prueba-inicial':'prueba-final'):'programa-dia-'+d);
     $('#td-done-tag').textContent='Día '+d+' de '+TOTAL_DAYS;
     $('#td-done-title').textContent=RN.sess.test?(d===1?'¡Prueba inicial completada!':'¡Programa completado!'):'¡Sesión completada!';
     $('#td-done-level').textContent=levelMsg;
@@ -2113,6 +2128,7 @@ $('#cele-ok').addEventListener('click',()=>$('#cele').hidden=true);
 
 /* ---------- Tarjeta para compartir ---------- */
 async function shareCard(){
+  track('compartir-resultado');
   const P=prog(), ini=P.tests.initial, fin=P.tests.final; if(!ini) return;
   try{await document.fonts.ready;}catch(e){}
   const W=1080,H=1350,cv=document.createElement('canvas'); cv.width=W; cv.height=H; const c=cv.getContext('2d');
@@ -2167,7 +2183,7 @@ function addReminder(){
   data.reminder=$('#rm-time').value; save();
   $('#rm-msg').textContent='Abre el archivo descargado y pulsa «Añadir» para guardarlo en tu calendario.';
 }
-$('#rm-add').addEventListener('click',addReminder);
+$('#rm-add').addEventListener('click',()=>{addReminder();track('recordatorio');});
 
 /* ---------- Bienvenida ---------- */
 const INTRO={
@@ -2176,7 +2192,7 @@ const INTRO={
   go(i){INTRO.i=i; document.querySelectorAll('.slide').forEach((s,k)=>s.hidden=k!==i);
     document.querySelectorAll('.pager i').forEach((p,k)=>p.classList.toggle('on',k===i));
     $('#intro-next').textContent=i===2?'Empezar':'Siguiente'; $('#intro-skip').hidden=i===2;},
-  done(){data.onboarded=true; save(); $('#intro').hidden=true;}
+  done(){data.onboarded=true; save(); $('#intro').hidden=true; track('bienvenida-completada');}
 };
 $('#intro-next').addEventListener('click',()=>INTRO.i<2?INTRO.go(INTRO.i+1):INTRO.done());
 $('#intro-skip').addEventListener('click',INTRO.done);
@@ -2331,6 +2347,7 @@ const SG={
       data.songs=data.songs||{}; const st=data.songs[s.id]||{best:0,plays:0};
       st.plays++; const isBest=r.score>st.best; if(isBest) st.best=r.score; data.songs[s.id]=st; save();
       record('songs',r.score,'Canción: '+s.name);
+      track('cancion-'+s.id);
       const un=[]; if(Object.keys(data.songs).length>=5) un.push('songs5'); if(r.score>=95) un.push('perfect');
       const sk=PG.streak(); if(sk>=3) un.push('streak3'); if(sk>=7) un.push('streak7'); if(sk>=14) un.push('streak14');
       setTimeout(()=>unlock(un),300);
@@ -2442,6 +2459,7 @@ addEventListener('pagehide',()=>{if(eng.on) stopMic();});
 const h0=location.hash.slice(1); if(views[h0]&&h0!==cur) go(h0);
 IM.hint(); RG.render(); if(cur==='today') TD.render();
 if(!data.onboarded&&!(data.program&&data.program.log&&data.program.log.length)) INTRO.show();
+if(matchMedia('(display-mode: standalone)').matches||navigator.standalone===true) track('abierta-como-app');
 setStatus(false);
 
 /* ---------- Ventana Premium ---------- */
@@ -2469,6 +2487,7 @@ function renderPro(){
 }
 let proReturn=null;
 function openPro(reason){
+  if(!PRO.is()) track('premium-abierto');
   const r=$('#pro-reason'); r.hidden=!reason||PRO.is(); r.textContent=reason||'';
   setProMsg(''); renderPro();
   proReturn=document.activeElement;
