@@ -44,6 +44,7 @@
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%;text-size-adjust:100%}
 *,*::before,*::after{box-sizing:inherit}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.5 var(--text);overflow-x:hidden;padding-bottom:86px;-webkit-tap-highlight-color:transparent}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
 h1,h2,h3{font-family:var(--display);line-height:1.1;margin:0;letter-spacing:-.01em}
@@ -189,6 +190,34 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surfa
 .err li+li{margin-top:6px}
 .logo{width:56px;height:56px}
 
+/* Programa */
+.days{display:grid;grid-template-columns:repeat(10,1fr);gap:6px;margin:16px 0 18px}
+.days i{aspect-ratio:1;border-radius:8px;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-style:normal;font-size:.72rem;font-weight:700;color:var(--muted)}
+.days i.done{background:var(--brand);color:var(--brand-ink)}
+.days i.now{outline:3px solid var(--brand);outline-offset:-3px;color:var(--ink)}
+.days i.test{border-radius:50%}
+.plan-list{list-style:none;padding:0;margin:12px 0 0;counter-reset:st}
+.plan-list li{counter-increment:st;display:flex;gap:12px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line)}
+.plan-list li::before{content:counter(st);font-family:var(--display);font-weight:800;color:var(--brand);min-width:1.2em}
+.week-tag{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--surface-2);font-weight:700;font-size:.85rem;color:var(--muted)}
+.coach{margin-top:14px;padding:14px 16px;border-left:4px solid var(--brand);background:var(--surface-2);border-radius:0 14px 14px 0}
+.coach b{display:block;font-size:.85rem;color:var(--muted);margin-bottom:2px}
+.runbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:12px}
+.metrics div{background:var(--surface-2);border-radius:14px;padding:12px}
+.metrics b{display:block;font-family:var(--display);font-size:1.7rem;font-weight:800}
+.metrics span{color:var(--muted);font-size:.88rem}
+.delta{font-size:.9rem;font-weight:700;margin-left:6px}
+.delta.up{color:var(--ok)} .delta.down{color:var(--off)}
+
+/* Precio y panel */
+.price{display:flex;flex-direction:column;align-items:flex-start;gap:2px;margin-top:16px}
+.price b{font-family:var(--display);font-size:2.6rem;font-weight:800;line-height:1}
+.price span{color:var(--muted);font-weight:700;font-size:.92rem}
+.stat-list{list-style:none;padding:0;margin:12px 0 0}
+.stat-list li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+.stat-list li span{color:var(--muted)}
+
 /* Premium */
 a.btn{display:flex;align-items:center;justify-content:center;text-decoration:none;color:inherit}
 a.btn.primary{color:var(--brand-ink)}
@@ -226,8 +255,67 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
 </header>
 
 <main>
+  <!-- HOY: PROGRAMA DE 30 DÍAS -->
+  <section class="view active" id="v-today" aria-labelledby="td-title">
+    <div id="td-home">
+      <span class="week-tag" id="td-week"></span>
+      <h2 id="td-title" style="margin-top:10px"></h2>
+      <p class="lede" id="td-text"></p>
+      <div class="days" id="td-days" aria-hidden="true"></div>
+      <div class="panel">
+        <div class="small-label" id="td-card-kicker"></div>
+        <h3 id="td-card-title" style="font-size:1.4rem;margin-top:4px"></h3>
+        <ol class="plan-list" id="td-card-list"></ol>
+        <div class="coach" id="td-coach"></div>
+        <div class="actions"><button class="btn primary big" id="td-start" type="button">Empezar sesión</button></div>
+      </div>
+      <div class="panel" id="td-tests" style="margin-top:14px" hidden></div>
+    </div>
+
+    <div id="td-run" hidden>
+      <div class="runbar"><button class="btn small" id="td-exit" type="button">Salir</button><span class="small-label" id="td-count"></span></div>
+      <div class="progress" style="margin-top:0"><i id="td-prog"></i></div>
+      <h2 id="td-step-title" style="margin-top:18px"></h2>
+      <p class="lede" id="td-step-text"></p>
+      <div class="target">
+        <div><div class="small-label" id="td-now-l">Canta</div><div class="sing-now" id="td-now">—</div></div>
+        <div class="phase" id="td-phase"></div>
+      </div>
+      <canvas class="graph" id="td-graph" aria-label="Tu voz frente a las notas del ejercicio"></canvas>
+      <div class="actions">
+        <button class="btn primary big" id="td-go" type="button">Empezar ejercicio</button>
+        <button class="btn big" id="td-skip" type="button">Saltar</button>
+      </div>
+      <div class="result panel" id="td-step-res" hidden>
+        <div class="score"><b id="td-step-score"></b><span id="td-step-unit">puntos</span></div>
+        <div class="notes-row" id="td-step-notes"></div>
+        <p class="feedback" id="td-step-fb"></p>
+        <div class="actions" id="td-rec" hidden>
+          <button class="btn" id="td-play" type="button">▶ Escúchate</button>
+          <button class="btn" id="td-mix" type="button">▶ Con la referencia</button>
+          <button class="btn small" id="td-del" type="button">Borrar</button>
+        </div>
+        <p class="small-label" id="td-rec-note" hidden style="margin-top:8px">Tu grabación solo está en este dispositivo y se borra al terminar la sesión.</p>
+      </div>
+    </div>
+
+    <div id="td-done" hidden>
+      <span class="week-tag" id="td-done-tag"></span>
+      <h2 style="margin-top:10px" id="td-done-title">¡Sesión completada!</h2>
+      <div class="panel" style="margin-top:16px">
+        <div class="score"><b id="td-done-score"></b><span id="td-done-unit">puntos de media</span></div>
+        <p id="td-done-level" style="margin-top:8px"></p>
+        <div id="td-done-metrics"></div>
+        <ol class="plan-list" id="td-done-list"></ol>
+        <div class="coach" id="td-done-coach"></div>
+      </div>
+      <div class="panel" id="td-done-pro" style="margin-top:14px" hidden></div>
+      <div class="actions"><button class="btn primary big" id="td-back" type="button">Volver al plan</button></div>
+    </div>
+  </section>
+
   <!-- AFINADOR -->
-  <section class="view active" id="v-tuner" aria-labelledby="h-tuner">
+  <section class="view" id="v-tuner" aria-labelledby="h-tuner">
     <h2 id="h-tuner" class="sr-only" style="position:absolute;left:-9999px">Afinador</h2>
     <div class="readout idle" id="tn-readout">
       <div class="note" id="tn-note">—</div>
@@ -338,6 +426,7 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
       <div class="week" id="pg-week"></div>
     </div>
     <div class="stats" style="margin-top:14px" id="pg-stats"></div>
+    <div class="actions"><button class="btn" id="pg-range" type="button">Medir o ajustar mi rango vocal</button></div>
     <div class="panel" id="pro-box" style="margin-top:14px">
       <span class="pro-tag">PREMIUM</span>
       <p id="pro-box-text" style="margin-top:10px"></p>
@@ -356,10 +445,10 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
 
 <nav class="tabs" aria-label="Secciones">
   <div class="tabs-in">
-    <button type="button" data-view="tuner" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 16a8 8 0 1 1 16 0"/><path d="M12 16l4-5"/></svg>Afinador</button>
+    <button type="button" data-view="today" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="3"/><path d="M3 9h18M8 2v4M16 2v4M8 14l2.5 2.5L16 12"/></svg>Hoy</button>
+    <button type="button" data-view="tuner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 16a8 8 0 1 1 16 0"/><path d="M12 16l4-5"/></svg>Afinador</button>
     <button type="button" data-view="imitate"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V6l10-2v12"/><circle cx="6.5" cy="18" r="2.5"/><circle cx="16.5" cy="16" r="2.5"/></svg>Imitar</button>
     <button type="button" data-view="scales"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 20h5v-5h5v-5h5V5h3"/></svg>Escalas</button>
-    <button type="button" data-view="range"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M7 8l5-5 5 5M7 16l5 5 5-5"/></svg>Rango</button>
     <button type="button" data-view="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Progreso</button>
   </div>
 </nav>
@@ -375,6 +464,17 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
   </div>
 </div>
 
+<div class="gate" id="stats" role="dialog" aria-modal="true" aria-labelledby="stats-title" hidden>
+  <div class="gate-card pro-card">
+    <button class="close" id="stats-close" type="button" aria-label="Cerrar">×</button>
+    <h1 id="stats-title" style="font-size:1.7rem">Panel de prueba</h1>
+    <p class="small-label" style="margin-top:6px">Haz una captura de esta pantalla y envíasela a quien te pasó la app.</p>
+    <div id="stats-body"></div>
+    <button class="btn" id="stats-copy" type="button" style="width:100%;margin-top:16px">Copiar datos</button>
+    <p class="pro-msg" id="stats-msg" role="status"></p>
+  </div>
+</div>
+
 <div class="gate" id="pro" role="dialog" aria-modal="true" aria-labelledby="pro-title" hidden>
   <div class="gate-card pro-card">
     <button class="close" id="pro-close" type="button" aria-label="Cerrar">×</button>
@@ -382,21 +482,24 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
     <h1 id="pro-title">Canta sin límites</h1>
     <p class="pro-reason" id="pro-reason" hidden></p>
     <div id="pro-free">
+      <div class="price"><b id="pro-price"></b><span>Pago único · Sin suscripción · Para siempre</span></div>
       <ul class="perks">
-        <li>Todas las escalas y arpegios</li>
-        <li>Imitar notas sin límite diario</li>
-        <li>Historial completo de tus prácticas</li>
-        <li>Los nuevos ejercicios y programas que vayan llegando</li>
+        <li>Los 30 días completos, con sesiones que se adaptan a tu nivel</li>
+        <li>La prueba final para ver, en números, cuánto has mejorado</li>
+        <li>Todas las canciones, escalas y arpegios</li>
+        <li>Imitar sin límite e historial completo</li>
+        <li>Todo lo nuevo que vaya llegando, sin pagar más</li>
       </ul>
-      <a class="btn primary big" id="pro-buy" href="#" target="_blank" rel="noopener" style="margin-top:20px">Hazte Premium</a>
+      <a class="btn primary big" id="pro-buy" href="#" target="_blank" rel="noopener" style="margin-top:20px">Desbloquear</a>
+      <p class="small-label" id="pro-guarantee" style="margin-top:10px;text-align:center"></p>
       <div class="field" style="margin-top:22px">
-        <label for="pro-key">¿Ya has comprado? Pega tu clave de licencia</label>
-        <input type="text" id="pro-key" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Clave del correo de compra">
+        <label for="pro-key">¿Tienes un código de acceso o de compra?</label>
+        <input type="text" id="pro-key" autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" placeholder="Escribe o pega tu código">
       </div>
       <button class="btn big" id="pro-activate" type="button" style="width:100%;margin-top:10px">Activar</button>
     </div>
     <div id="pro-active" hidden>
-      <p style="margin-top:14px">Tienes Afina Premium activado en este dispositivo. ¡Gracias por apoyar la app!</p>
+      <p style="margin-top:14px" id="pro-active-text">Tienes Afina Premium activado en este dispositivo. ¡Gracias por apoyar la app!</p>
       <p class="small-label" id="pro-active-key" style="margin-top:8px"></p>
       <button class="btn" id="pro-deactivate" type="button" style="width:100%;margin-top:18px">Desactivar en este dispositivo</button>
       <p class="small-label" style="margin-top:8px">Úsalo si vas a pasar tu licencia a otro móvil u ordenador.</p>
@@ -442,7 +545,11 @@ const CONFIG={
   LICENSE_API:'https://api.lemonsqueezy.com/v1/licenses',
   FREE_IMITATE_PER_DAY:5,     // Notas gratis al día en Imitar
   FREE_SCALES:['mayor5'],     // Ejercicios de escalas gratuitos
-  FREE_HISTORY:3              // Prácticas visibles en el historial gratuito
+  FREE_HISTORY:3,             // Prácticas visibles en el historial gratuito
+  PRICE:'6,99 €',             // Precio que se muestra en la ventana Premium
+  GUARANTEE_DAYS:14,          // Días de garantía de devolución (pon null para no mostrarla)
+  TESTER_CODES:['AFINA-PRUEBA'], // Códigos para probadores (desbloquean todo)
+  TESTER_DAYS:30              // Duración del acceso de probador
 };
 function deviceName(){
   const u=navigator.userAgent;
@@ -462,7 +569,8 @@ function licErr(e){
   return 'No se ha podido activar la clave'+(e?' ('+e+')':'')+'.';
 }
 const PRO={
-  is(){const p=data.premium;return !!(p&&p.key&&p.instance&&p.ok);},
+  is(){if(data.tester&&data.tester.until>Date.now()) return true; const p=data.premium;return !!(p&&p.key&&p.instance&&p.ok);},
+  tester(){return !!(data.tester&&data.tester.until>Date.now());},
   async call(path,params){
     const r=await fetch(CONFIG.LICENSE_API+'/'+path,{method:'POST',headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(params)});
     let j={}; try{j=await r.json();}catch(e){}
@@ -470,6 +578,10 @@ const PRO={
   },
   async activate(key){
     key=key.trim();
+    if(CONFIG.TESTER_CODES.map(c=>c.toUpperCase()).includes(key.toUpperCase())){
+      data.tester={code:key.toUpperCase(),from:Date.now(),until:Date.now()+CONFIG.TESTER_DAYS*864e5};
+      save(); return {ok:true,tester:true};
+    }
     if(!/^[A-Za-z0-9-]{8,}$/.test(key)) return {error:'Esa clave no tiene el formato correcto. Cópiala tal cual aparece en el correo de compra.'};
     let j;
     try{j=await PRO.call('activate',{license_key:key,instance_name:'Afina en '+deviceName()});}
@@ -493,6 +605,7 @@ const PRO={
     }catch(e){/* sin conexión: se mantiene el estado guardado */}
   },
   async deactivate(){
+    if(data.tester){data.tester=null;save(); if(!data.premium) return {ok:true};}
     const p=data.premium; if(!p) return {ok:true};
     try{const j=await PRO.call('deactivate',{license_key:p.key,instance_id:p.instance}); if(j&&j.deactivated===false&&j.error&&!/not found/i.test(j.error)) return {error:'No se ha podido desactivar: '+j.error};}
     catch(e){return {error:'Necesitas conexión a internet para desactivar la licencia.'};}
@@ -691,7 +804,7 @@ class Graph{
   roll(win){this.mode='roll';this.win=win;}
   fit(){
     if(!this.targets.length) return;
-    let lo=Infinity,hi=-Infinity; this.targets.forEach(t=>{lo=Math.min(lo,t.m);hi=Math.max(hi,t.m);});
+    let lo=Infinity,hi=-Infinity; this.targets.forEach(t=>{const m2=t.m2!=null?t.m2:t.m;lo=Math.min(lo,t.m,m2);hi=Math.max(hi,t.m,m2);});
     const pad=Math.max(3,(12-(hi-lo))/2); this.lo=lo-pad; this.hi=hi+pad;
   }
   follow(m){
@@ -717,9 +830,10 @@ class Graph{
       if(nat&&(this.hi-this.lo<20||p===0||p===7)){c.fillStyle=p===0?C.ink:C.muted;c.fillText(nTxt(m),6,yy);}
     }
     for(const t of this.targets){
-      const x0=x(t.a),x1=x(t.b),y0=y(t.m+0.5),y1=y(t.m-0.5);
+      const x0=x(t.a),x1=x(t.b);
       c.fillStyle=t.ghost?C['target-ghost']:C.target;
-      rr(c,x0,y0,Math.max(2,x1-x0),y1-y0,6); c.fill();
+      if(t.m2!=null){c.beginPath();c.moveTo(x0,y(t.m+0.6));c.lineTo(x1,y(t.m2+0.6));c.lineTo(x1,y(t.m2-0.6));c.lineTo(x0,y(t.m-0.6));c.closePath();c.fill();}
+      else{const y0=y(t.m+0.5),y1=y(t.m-0.5); rr(c,x0,y0,Math.max(2,x1-x0),y1-y0,6); c.fill();}
     }
     c.lineWidth=3.5; c.lineCap='round';
     for(let i=1;i<this.pts.length;i++){
@@ -728,7 +842,7 @@ class Graph{
       if(p1.t-p0.t>0.12||Math.abs(p1.m-p0.m)>1.5) continue;
       const tg=this.activeTarget(p1.t);
       let col=C.brand;
-      if(tg){let d=(p1.m-tg.m)*100;d-=1200*Math.round(d/1200);const ad=Math.abs(d);col=ad<=20?C.ok:ad<=50?C.near:C.off;}
+      if(tg){const tm=tg.m2!=null?tg.m+(tg.m2-tg.m)*(p1.t-tg.a)/(tg.b-tg.a):tg.m; let d=(p1.m-tm)*100;d-=1200*Math.round(d/1200);const ad=Math.abs(d);col=ad<=20?C.ok:ad<=50?C.near:C.off;}
       c.strokeStyle=col; c.beginPath(); c.moveTo(x(p0.t),y(p0.m)); c.lineTo(x(p1.t),y(p1.m)); c.stroke();
     }
     if(this.mode==='fixed'&&now>a&&now<b){c.strokeStyle=C.muted;c.globalAlpha=.5;c.lineWidth=1.5;c.beginPath();c.moveTo(x(now),0);c.lineTo(x(now),H);c.stroke();c.globalAlpha=1;}
@@ -1056,7 +1170,8 @@ const PG={
       '<div><b>'+(data.best.imitate||'—')+'</b><span>mejor en Imitar</span></div>'+
       '<div><b>'+(data.best.scales||'—')+'</b><span>mejor en Escalas</span></div>'+
       '<div><b>'+(hasRange()?nTxt(data.range.low)+'–'+nTxt(data.range.high):'—')+'</b><span>rango vocal</span></div>'+
-      '<div><b>'+data.days.length+'</b><span>días practicados</span></div>';
+      '<div><b>'+data.days.length+'</b><span>días practicados</span></div>'+
+      (data.program?'<div><b>'+Math.min(data.program.day,TOTAL_DAYS)+'/'+TOTAL_DAYS+'</b><span>día del programa</span></div><div><b>'+(data.program.tests.final||data.program.tests.initial||{overall:'—'}).overall+'</b><span>puntuación de voz</span></div>':'');
     const h=$('#pg-hist');
     if(!data.sessions.length){h.innerHTML='<li class="empty">Aún no hay prácticas. Empieza por Imitar o Escalas.</li>';return;}
     const lim=PRO.is()?30:CONFIG.FREE_HISTORY;
@@ -1065,7 +1180,7 @@ const PG={
       return '<li><div>'+esc(x.label)+'<br><span>'+d.toLocaleDateString('es-ES',{day:'numeric',month:'short'})+', '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'})+'</span></div><b>'+x.score+'</b></li>';
     }).join('')+(!PRO.is()&&data.sessions.length>lim?'<li class="more">Tienes '+(data.sessions.length-lim)+' prácticas más. <button type="button" data-pro>Ver historial completo con Premium</button></li>':'');
     const mb=h.querySelector('[data-pro]'); if(mb) mb.addEventListener('click',()=>openPro('El historial completo es una función Premium.'));
-    $('#pro-box-text').textContent=PRO.is()?'Tienes Afina Premium activado. ¡Gracias por apoyar la app!':'Desbloquea todas las escalas y arpegios, practica Imitar sin límite y guarda tu historial completo.';
+    $('#pro-box-text').textContent=PRO.is()?'Tienes Afina Premium activado. ¡Gracias por apoyar la app!':'Desbloquea los 30 días del programa, todas las escalas y arpegios, Imitar sin límite y tu historial completo.';
     $('#pro-open').textContent=PRO.is()?'Gestionar Premium':'Ver Premium';
   }
 };
@@ -1074,10 +1189,560 @@ $('#pg-reset').addEventListener('click',()=>{
   if(confirm('¿Borrar todo tu progreso y tu rango vocal? No se puede deshacer.')){data=blank();save();PG.render();RG.render();SC.fillTonic();IM.hint();}
 });
 
+/* ---------- Programa de 30 días ---------- */
+const FREE_DAYS=3, TOTAL_DAYS=30;
+const WEEKS=[
+  {n:1,from:2,to:7,title:'Encuentra la nota',text:'Esta semana aprendes a escuchar una nota y llegar a ella con la voz.',
+   tip:'Canta con la boca relajada y una vocal abierta, como «aaa». No hace falta volumen: busca un sonido cómodo y tranquilo.'},
+  {n:2,from:8,to:14,title:'Sostén la nota',text:'Ahora toca mantener la nota firme, sin que suba ni baje.',
+   tip:'El aire es el combustible de la nota. Suéltalo de forma continua y sin empujar, como si soplaras una vela sin llegar a apagarla.'},
+  {n:3,from:15,to:21,title:'Salta sin miedo',text:'Trabajas los saltos entre notas: arpegios, quintas y ecos.',
+   tip:'Antes de saltar a una nota, imagínala por dentro. Si la oyes en tu cabeza, la voz la encuentra mucho más fácil.'},
+  {n:4,from:22,to:29,title:'Canta melodías',text:'Juntas todo lo aprendido en melodías populares que todo el mundo conoce.',
+   tip:'Canta frases enteras, no notas sueltas. Respira antes de cada frase y deja que la melodía fluya.'}
+];
+const TEST_TIP='Esta prueba mide tu punto de partida. No te preocupes por el resultado: lo importante es compararlo con la prueba final del día 30.';
+const MELODIES=[
+  {name:'Estrellita',cut:7,notes:[0,0,7,7,9,9,7,5,5,4,4,2,2,0],durs:[1,1,1,1,1,1,2,1,1,1,1,1,1,2]},
+  {name:'Himno de la alegría',cut:8,notes:[4,4,5,7,7,5,4,2,0,0,2,4,4,2,2],durs:[1,1,1,1,1,1,1,1,1,1,1,1,1.5,0.5,2]},
+  {name:'Martinillo',cut:8,notes:[0,2,4,0,0,2,4,0,4,5,7,4,5,7],durs:[1,1,1,1,1,1,1,1,1,1,2,1,1,2]}
+];
+function prog(){
+  if(!data.program) data.program={day:1,level:1,tests:{},log:[]};
+  return data.program;
+}
+const weekOf=d=>WEEKS.find(w=>d>=w.from&&d<=w.to)||WEEKS[0];
+const isTestDay=d=>d===1||d===TOTAL_DAYS;
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function lvlParams(L){
+  return {hold:Math.min(7,3+L*0.5), bpm:Math.min(104,56+L*5), tol:Math.max(28,62-L*4), demo:L<6,
+          accK:L<=2?0.85:L<=4?1.05:1.25, stbK:L<=2?1.0:L<=4?1.25:1.5};
+}
+function noteAt(f){const [lo,hi]=comfy();return Math.round(lo+(hi-lo)*f);}
+function tonicFor(span){
+  const [lo,hi]=comfy(); const top=Math.max(lo,hi-span);
+  return Math.round(lo+(top-lo)*(0.2+Math.random()*0.45));
+}
+
+/* Mensajes de ánimo */
+const CHEER={
+  hi:['¡Muy bien!','¡Clavado!','¡Así se hace!','¡Qué buen oído!','¡Impecable!'],
+  mid:['¡Bien!','Vas por buen camino.','Cada vez más cerca.','Buen trabajo.','Se nota la práctica.'],
+  lo:['Buen intento.','Es normal al principio: repítelo con calma.','Paso a paso: lo importante es practicar.','Tranquilo, la voz se entrena como un músculo.']
+};
+const cheer=s=>pick(s>=80?CHEER.hi:s>=55?CHEER.mid:CHEER.lo);
+
+/* Puntuaciones */
+function holdScore(frames,tg,L){
+  if(frames.length<15) return null;
+  const P=lvlParams(L);
+  let devs=frames.map(m=>(m-tg)*100);
+  const med=devs.slice().sort((a,b)=>a-b)[devs.length>>1];
+  let octave=0; if(Math.abs(med)>600){octave=Math.round(med/1200);devs=devs.map(d=>d-octave*1200);}
+  const mean=devs.reduce((a,b)=>a+b,0)/devs.length;
+  const meanAbs=devs.reduce((a,b)=>a+Math.abs(b),0)/devs.length;
+  const sd=Math.sqrt(devs.reduce((a,b)=>a+(b-mean)*(b-mean),0)/devs.length);
+  const acc=Math.round(clamp(100-meanAbs*P.accK,0,100)), stb=Math.round(clamp(100-sd*P.stbK,0,100));
+  let score=Math.round(0.6*acc+0.4*stb); if(octave) score=Math.round(score*0.8);
+  const fb=[cheer(score)];
+  if(octave) fb.push('Has cantado la nota correcta, pero una octava más '+(octave>0?'aguda':'grave')+'.');
+  fb.push('De media te has desviado '+Math.round(meanAbs)+' cents (100 cents son un semitono).');
+  if(Math.abs(mean)<=15) fb.push('Has estado centrado en la nota.');
+  else if(mean>0) fb.push('Tiendes a quedarte un poco alto: relaja y baja ligeramente.');
+  else fb.push('Tiendes a quedarte un poco bajo: piensa la nota algo más arriba y apoya el aire.');
+  if(stb<60) fb.push('La nota oscila: mantén el aire y el volumen constantes.');
+  return {score,acc,stb,fb:fb.join(' ')};
+}
+function patternScore(s,buckets){
+  const per=[];
+  s.notes.forEach((tg,i)=>{
+    if(s.callN&&i<s.callN) return;
+    const arr=buckets[i];
+    if(arr.length<3){per.push({m:tg,score:0,dev:null});return;}
+    let hits=0,sum=0;
+    arr.forEach(m=>{let d=(m-tg)*100;d-=1200*Math.round(d/1200);sum+=d;if(Math.abs(d)<=s.tol)hits++;});
+    per.push({m:tg,score:Math.round(hits/arr.length*100),dev:sum/arr.length});
+  });
+  const sc=Math.round(per.reduce((a,r)=>a+r.score,0)/per.length);
+  if(per.every(r=>r.dev==null)) return {score:0,notes:per,silent:true,fb:'No te he oído durante el ejercicio. Canta más fuerte o acércate al micrófono.'};
+  const ok=per.filter(r=>r.score>=70).length;
+  const fb=[cheer(sc),'Has acertado '+ok+' de '+per.length+' notas.'];
+  const worst=per.filter(r=>r.dev!=null).sort((a,b)=>a.score-b.score)[0];
+  if(worst&&worst.score<70) fb.push('La que más te ha costado: '+nTxt(worst.m)+(Math.abs(worst.dev)>15?(worst.dev>0?' (te quedaste alto).':' (te quedaste bajo).'):'.'));
+  return {score:sc,notes:per,fb:fb.join(' ')};
+}
+
+/* Generadores de ejercicios */
+function mkHold(title,text,f,dur){return {type:'hold',title,text,m:noteAt(f),dur};}
+function mkPattern(kind,title,text,steps,durs,L,opt){
+  opt=opt||{}; const P=lvlParams(L);
+  const t=tonicFor(Math.max(...steps));
+  return {type:'pattern',kind,title,text,notes:steps.map(x=>t+x),durs:durs||steps.map(()=>1),
+    bpm:opt.bpm||P.bpm,demo:opt.demo!=null?opt.demo:P.demo,tol:P.tol,callN:opt.callN||0};
+}
+function mkEcho(k,moves,L,title){
+  const P=lvlParams(L),[lo,hi]=comfy();
+  let m=noteAt(0.5); const notes=[m];
+  for(let i=1;i<k;i++){
+    let tries=0,n;
+    do{n=m+pick(moves)*(Math.random()<0.5?-1:1);}while((n<lo||n>hi)&&++tries<30);
+    if(n<lo||n>hi) n=m; notes.push(n); m=n;
+  }
+  return {type:'pattern',kind:'echo',title,text:'Escucha la pequeña melodía y repítela igual, siguiendo el pulso. Entrena tu oído y tu memoria musical.',
+    notes,durs:notes.map(()=>1),bpm:Math.min(P.bpm,80),demo:true,tol:P.tol,callN:0};
+}
+function mkMelody(mel,L,short){
+  let notes=mel.notes.slice(),durs=mel.durs.slice();
+  if(short){notes=notes.slice(0,mel.cut);durs=durs.slice(0,mel.cut);durs[durs.length-1]=2;}
+  const P=lvlParams(L);
+  return mkPattern('melody','Canción: '+mel.name+(short?' (primera frase)':''),'Primero escucha la melodía. Después cántala con «la la la» siguiendo el pulso.',notes,durs,L,{bpm:Math.min(P.bpm,84),demo:true});
+}
+const CALLS=[
+  {call:[0,2,4,5],resp:[4,2,0]},{call:[0,4,7],resp:[5,4,2,0]},{call:[7,5,4],resp:[2,4,0]},
+  {call:[0,2,4,7],resp:[5,4,2,0]},{call:[4,5,7],resp:[5,4,2,0]}
+];
+function mkCall(i,L){
+  const c=CALLS[i%CALLS.length];
+  return mkPattern('call','Pregunta y respuesta','La app canta una pregunta y tú respondes cantando las notas de la franja oscura. Fíjate en sus nombres: la respuesta siempre vuelve a la nota de casa.',
+    c.call.concat(c.resp),null,L,{bpm:Math.min(lvlParams(L).bpm,76),demo:false,callN:c.call.length});
+}
+const NOTE_B=['Do','Re♭','Re','Mi♭','Mi','Fa','Sol♭','Sol','La♭','La','Si♭','Si'];
+function mkNoref(L){
+  const degs=L<4?[[7,'quinta'],[4,'tercera']]:[[7,'quinta'],[4,'tercera'],[5,'cuarta'],[9,'sexta'],[2,'segunda']];
+  const dg=pick(degs), t=tonicFor(dg[0]), m=t+dg[0];
+  const NN=[5,10,3,8,1].includes(pc(t))?NOTE_B:NOTE;
+  const path=[0,2,4,5,7,9].filter(x=>x<=dg[0]).map(x=>NN[pc(t+x)]);
+  return {type:'noref',title:'Encuentra la nota sin ayuda',
+    text:'Te doy la nota '+NN[pc(t)]+'. Sin escuchar la otra, canta '+NN[pc(m)]+', la '+dg[1]+' nota de la escala. Recórrela por dentro: '+path.join(', ')+'.',
+    t,m,dur:lvlParams(L).hold};
+}
+function mkSiren(L){
+  const [lo,hi]=comfy(), a=lo+1, b=Math.max(a+4,Math.min(hi-1,a+Math.min(12,5+L)));
+  return {type:'siren',title:'Calentamiento: sirena',text:'Desliza la voz como una sirena: sube suave de grave a agudo y vuelve a bajar, siguiendo la franja. Usa «uuu» o haz vibrar los labios.',
+    lo:a,hi:b,half:Math.max(2.2,3.6-L*0.15),tol:Math.max(70,lvlParams(L).tol+20)};
+}
+const IT={
+  warmHold:{label:'Calentamiento: nota larga',make:L=>mkHold('Calentamiento: nota larga','Escucha la nota y cántala con una vocal abierta. Mantenla firme y relajada hasta que acabe el tiempo.',0.45,Math.min(8,lvlParams(L).hold+2))},
+  warmSiren:{label:'Calentamiento: sirena',make:L=>mkSiren(L)},
+  warmChroma:{label:'Calentamiento: semitonos',make:L=>mkPattern('chroma','Calentamiento: semitonos','Sube y baja de medio tono en medio tono, como una escalera de peldaños muy pequeños.',[0,1,2,1,0],null,L,{bpm:Math.min(lvlParams(L).bpm,70)})},
+  match:f=>({label:'Encuentra la nota',make:L=>mkHold('Encuentra la nota','Escucha y repite la nota. Intenta clavarla desde el primer momento.',f,lvlParams(L).hold)}),
+  sustain:{label:'Nota sostenida',make:L=>mkHold('Nota sostenida','Mantén la nota todo el tiempo. Fíjate en que la línea de tu voz quede plana dentro de la franja.',0.6,Math.min(9,lvlParams(L).hold+3))},
+  scale:(k,slow)=>({label:EX[k].name,make:L=>mkPattern('scale',EX[k].name,EX[k].tip+' Primero lo escuchas y después lo cantas siguiendo el pulso.',EX[k].steps,null,L,slow?{bpm:Math.min(lvlParams(L).bpm,70)}:{})}),
+  chroma:(steps,label)=>({label,make:L=>mkPattern('chroma',label,'Notas que suben y bajan de semitono en semitono. Son pasos muy pequeños: escucha bien la diferencia.',steps,null,L)}),
+  echo:(k,moves,label)=>({label,make:L=>mkEcho(k,moves,L,label)}),
+  call:i=>({label:'Pregunta y respuesta',make:L=>mkCall(i,L)}),
+  noref:{label:'Encuentra la nota sin ayuda',make:L=>mkNoref(L)},
+  melody:(i,short)=>({label:'Canción: '+MELODIES[i].name+(short?' (primera frase)':''),make:L=>mkMelody(MELODIES[i],L,short)})
+};
+const WARMS=[IT.warmHold,IT.warmSiren,IT.warmChroma];
+const POOLS={
+  1:[IT.match(0.3),IT.scale('mayor5',true),IT.echo(2,[1,2],'Eco de 2 notas'),IT.match(0.7),IT.chroma([0,1,2,3,2,1,0],'Semitonos'),IT.call(0)],
+  2:[IT.sustain,IT.scale('mayor5'),IT.scale('mayor'),IT.echo(3,[1,2],'Eco de 3 notas'),IT.chroma([0,1,2,3,4,3,2,1,0],'Escalera de semitonos'),IT.call(1)],
+  3:[IT.scale('arpMay'),IT.scale('quintas'),IT.echo(3,[3,4,5,7],'Eco con saltos'),IT.scale('arpMen'),IT.call(2),IT.noref],
+  4:[IT.scale('mayor'),IT.echo(4,[1,2,3,4,5],'Eco de 4 notas'),IT.call(3),IT.noref,IT.scale('menor'),IT.call(4)]
+};
+function dayItems(d){
+  const w=weekOf(d), j=d-w.from, pool=POOLS[w.n], n=pool.length;
+  return [WARMS[(j+Math.floor(j/3))%3], pool[j%n], pool[(j+2)%n], IT.melody((j+w.n)%MELODIES.length,w.n===1)];
+}
+function testItems(){
+  const T='Escucha la nota y cántala. Mantenla firme hasta que acabe el tiempo.';
+  return [
+    {label:'Tu nota más grave',make:()=>({type:'range',which:'low',title:'Tu nota más grave',text:'Canta «aaa» en una nota cómoda y baja despacio hasta la más grave que puedas sostener. Mantén cada nota un momento.'})},
+    {label:'Tu nota más aguda',make:()=>({type:'range',which:'high',title:'Tu nota más aguda',text:'Ahora sube despacio hasta la nota más aguda que puedas sostener sin forzar. Si raspa o duele, para.'})},
+    {label:'Nota grave',make:()=>mkHold('Nota grave',T,0.25,4)},
+    {label:'Nota media',make:()=>mkHold('Nota media',T,0.55,4)},
+    {label:'Nota aguda',make:()=>mkHold('Nota aguda',T,0.85,4)},
+    {label:'Cinco notas',make:()=>mkPattern('scale','Cinco notas',EX.mayor5.tip+' Primero lo escuchas y después lo cantas siguiendo el pulso.',EX.mayor5.steps,null,1,{bpm:66,demo:true})},
+    {label:'Eco de 3 notas',make:()=>mkEcho(3,[1,2],1,'Eco de 3 notas')}
+  ];
+}
+
+/* Glissando para la sirena */
+function playGlide(m1,m2,dur,at,vol){
+  const ctx=eng.ctx; if(!ctx) return;
+  vol=vol==null?0.22:vol;
+  const o=ctx.createOscillator(),g=ctx.createGain();
+  o.type='triangle'; o.frequency.setValueAtTime(m2f(m1),at); o.frequency.exponentialRampToValueAtTime(m2f(m2),at+dur);
+  g.gain.setValueAtTime(0,at); g.gain.linearRampToValueAtTime(vol,at+0.05); g.gain.setValueAtTime(vol,at+dur-0.08); g.gain.linearRampToValueAtTime(0,at+dur);
+  o.connect(g).connect(ctx.destination); o.start(at); o.stop(at+dur+0.05);
+  eng.nodes.add(o); o.onended=()=>eng.nodes.delete(o);
+}
+
+/* Grabación local (Escúchate) */
+const REC={
+  ok:typeof window.MediaRecorder!=='undefined', mr:null, chunks:[], t0:0, type:'',
+  start(t){
+    if(!REC.ok||!eng.stream||REC.mr) return;
+    try{
+      const types=['audio/mp4','audio/webm;codecs=opus','audio/webm'];
+      const mt=MediaRecorder.isTypeSupported?types.find(x=>MediaRecorder.isTypeSupported(x)):null;
+      REC.mr=new MediaRecorder(eng.stream,mt?{mimeType:mt}:undefined);
+      REC.chunks=[]; REC.type=REC.mr.mimeType||mt||'audio/webm';
+      REC.mr.ondataavailable=e=>{if(e.data&&e.data.size) REC.chunks.push(e.data);};
+      REC.mr.start(); REC.t0=t;
+    }catch(e){REC.mr=null;}
+  },
+  stop(){
+    return new Promise(res=>{
+      const mr=REC.mr; if(!mr||mr.state==='inactive'){REC.mr=null;res(null);return;}
+      mr.onstop=()=>{const b=new Blob(REC.chunks,{type:REC.type});REC.mr=null;res(b.size?b:null);};
+      try{mr.stop();}catch(e){REC.mr=null;res(null);}
+    });
+  },
+  cancel(){const mr=REC.mr; REC.mr=null; if(mr&&mr.state!=='inactive'){mr.onstop=null;try{mr.stop();}catch(e){}}}
+};
+let player=null;
+function stopPlay(){if(player){try{player.pause();}catch(e){} player=null;} silenceAll();}
+
+const RN={
+  g:new Graph($('#td-graph')), steps:[], i:0, st:'idle', res:[], recs:{}, sess:null, x:null, t0:0,
+  begin(sess){
+    RN.sess=sess; RN.steps=sess.items.slice(); RN.i=0; RN.res=[]; RN.clearRecs(); RN.t0=Date.now();
+    $('#td-home').hidden=true; $('#td-done').hidden=true; $('#td-run').hidden=false;
+    RN.showStep(); window.scrollTo(0,0);
+  },
+  step(){let s=RN.steps[RN.i]; if(s&&s.make){s=s.make(RN.sess.L);RN.steps[RN.i]=s;} return s;},
+  nowHtml(s){
+    if(s.type==='hold'||s.type==='noref') return nHtml(s.m);
+    if(s.type==='pattern') return nHtml(s.notes[s.callN||0]);
+    if(s.type==='siren') return nHtml(s.lo);
+    return '—';
+  },
+  showStep(){
+    const s=RN.step(), n=RN.steps.length;
+    REC.cancel(); stopPlay(); RN.dropRec(RN.i);
+    RN.st='intro'; RN.x=null;
+    $('#td-count').textContent='Ejercicio '+(RN.i+1)+' de '+n;
+    $('#td-prog').style.width=(RN.i/n*100)+'%';
+    $('#td-step-title').textContent=s.title; $('#td-step-text').textContent=s.text;
+    $('#td-now-l').textContent=s.type==='range'?'Estás cantando':s.type==='siren'?'Empieza en':'Canta';
+    $('#td-now').innerHTML=RN.nowHtml(s);
+    RN.phase(s.type==='range'?'Tendrás 9 segundos':'Pulsa cuando estés listo',false);
+    $('#td-step-res').hidden=true;
+    RN.g.clear(); if(s.type==='range') RN.g.roll(9); else RN.g.fixed(0,1);
+    RN.g.resize(); RN.g.draw(eng.ctx?eng.ctx.currentTime:0);
+    RN.buttons();
+  },
+  buttons(){
+    const go=$('#td-go'),sk=$('#td-skip'),last=RN.i===RN.steps.length-1;
+    if(RN.st==='intro'){go.disabled=false;go.textContent='Empezar ejercicio';sk.disabled=false;sk.textContent='Saltar';}
+    else if(RN.st==='running'){go.disabled=true;go.textContent='En curso…';sk.disabled=false;sk.textContent='Parar';}
+    else{go.disabled=false;go.textContent=last?'Terminar sesión':'Siguiente';sk.disabled=false;sk.textContent='Repetir';}
+  },
+  phase(t,go){const p=$('#td-phase');p.textContent=t;p.classList.toggle('go',!!go);},
+  onGo(){if(RN.st==='intro') RN.start(); else if(RN.st==='done') RN.next();},
+  onSkip(){
+    if(RN.st==='running'){RN.abort();return;}
+    if(RN.st==='done'){RN.showStep();return;}
+    RN.res[RN.i]={skipped:true}; RN.next();
+  },
+  start(){
+    if(!eng.on){showGate('paused');return;}
+    const s=RN.step(); silenceAll(); stopPlay(); RN.g.clear();
+    const now=eng.ctx.currentTime;
+    if(s.type==='hold'||s.type==='noref'){
+      const ref=s.type==='hold'?s.m:s.t;
+      const t0=playTone(ref,1.2);
+      const tSing=t0+(s.type==='noref'?1.7:1.35);
+      RN.x={tSing,tEnd:tSing+s.dur,frames:[]};
+      RN.g.targets=[{a:t0,b:t0+1.2,m:ref,ghost:true},{a:tSing,b:RN.x.tEnd,m:s.m}];
+      RN.g.fixed(t0-0.2,RN.x.tEnd+0.2);
+      RN.phase(s.type==='noref'?'Escucha '+NOTE[pc(s.t)]+'…':'Escucha la nota…',false);
+    }else if(s.type==='pattern'){
+      const beat=60/s.bpm, n=s.notes.length, offs=[]; let acc=0;
+      for(let i=0;i<n;i++){if(s.callN&&i===s.callN) acc+=1; offs.push(acc); acc+=s.durs[i];}
+      const total=acc; let t=now+0.25; const x={beat,offs,total,D0:t};
+      if(s.callN){
+        x.C0=t; for(let k=0;k<4;k++) click(t+k*beat,k===0);
+        x.S=t+4*beat;
+        for(let i=0;i<s.callN;i++) playTone(s.notes[i],s.durs[i]*beat*0.9,x.S+offs[i]*beat,0.26);
+        for(let b=0;b<Math.ceil(total);b++) click(x.S+b*beat,false);
+        x.E=x.S+total*beat; x.buckets=s.notes.map(()=>[]); RN.x=x; RN.toSing(); x.ph='count';
+      }else{
+        if(s.demo){s.notes.forEach((m,i)=>playTone(m,s.durs[i]*beat*0.9,t+offs[i]*beat,0.24)); x.DE=t+total*beat; t=x.DE+beat;}
+        else{playTone(s.notes[0],beat*0.9,t,0.24); x.DE=t+beat; t=t+2*beat;}
+        x.C0=t; for(let k=0;k<4;k++) click(t+k*beat,k===0);
+        x.S=t+4*beat; for(let b=0;b<Math.ceil(total);b++) click(x.S+b*beat,false);
+        x.E=x.S+total*beat; x.buckets=s.notes.map(()=>[]);
+        RN.x=x;
+        if(s.demo){RN.g.targets=s.notes.map((m,i)=>({a:x.D0+offs[i]*beat,b:x.D0+(offs[i]+s.durs[i]*0.92)*beat,m,ghost:true}));RN.g.fixed(x.D0-0.1,x.DE+0.1);x.ph='demo';}
+        else{RN.toSing();x.ph='count';}
+      }
+    }else if(s.type==='siren'){
+      const h=s.half, t=now+0.25;
+      playGlide(s.lo,s.hi,h,t); playGlide(s.hi,s.lo,h,t+h);
+      const x={D0:t,DE:t+2*h,h,tot:0,hits:0,voiced:0}; x.C0=x.DE+0.6;
+      for(let k=0;k<3;k++) click(x.C0+k*0.6,k===0);
+      x.S=x.C0+1.8; x.E=x.S+2*h; x.ph='demo'; RN.x=x;
+      RN.g.targets=[{a:t,b:t+h,m:s.lo,m2:s.hi,ghost:true},{a:t+h,b:x.DE,m:s.hi,m2:s.lo,ghost:true}];
+      RN.g.fixed(t-0.1,x.DE+0.1);
+      RN.phase('Escucha la sirena…',false);
+    }else{
+      RN.x={t0:now,tEnd:now+9,best:null,run:{n:null,t0:0}};
+      RN.g.roll(9);
+      RN.phase('Canta ahora',true);
+    }
+    RN.st='running'; RN.buttons();
+  },
+  toSing(){
+    const s=RN.step(),x=RN.x;
+    RN.g.clear();
+    RN.g.targets=s.notes.map((m,i)=>({a:x.S+x.offs[i]*x.beat,b:x.S+(x.offs[i]+s.durs[i])*x.beat-0.02,m,ghost:!!(s.callN&&i<s.callN)}));
+    RN.g.fixed(x.S-x.beat*0.5,x.E+0.2);
+  },
+  sirenAt(t){const s=RN.step(),x=RN.x,u=(t-x.S)/x.h; return u<=1?s.lo+(s.hi-s.lo)*u:s.hi-(s.hi-s.lo)*(u-1);},
+  onFrame(fr){
+    if(RN.st!=='running'||!RN.x){RN.g.draw(fr.t);return;}
+    const s=RN.step(),x=RN.x;
+    if(s.type==='hold'||s.type==='noref'){
+      if(fr.t>=x.tSing){
+        if(!x.rec){x.rec=true;REC.start(fr.t);}
+        RN.phase('¡Ahora tú! Mantén la nota: '+Math.max(1,Math.ceil(x.tEnd-fr.t))+' s',true);
+        if(fr.m!=null){RN.g.push(fr.t,fr.m); if(fr.t>x.tSing+0.35) x.frames.push(fr.m);}
+        if(fr.t>=x.tEnd){
+          const r=holdScore(x.frames,s.m,RN.sess.L);
+          RN.finish(r||{score:0,acc:0,stb:0,silent:true,fb:'No te he oído bien. Canta más fuerte o acércate al micrófono.'},[{m:s.m,off:x.tSing-REC.t0,dur:s.dur}]);
+        }
+      }
+    }else if(s.type==='pattern'){
+      if(x.ph==='demo'){
+        const i=x.offs.findIndex((o,k)=>fr.t>=x.D0+o*x.beat&&fr.t<x.D0+(o+s.durs[k])*x.beat);
+        RN.phase('Escucha…',false); $('#td-now').innerHTML=i>=0?nHtml(s.notes[i]):'—';
+        if(fr.t>=x.C0-0.05){x.ph='count';RN.toSing();}
+      }
+      if(x.ph==='count'){
+        const k=4-Math.floor((fr.t-x.C0)/x.beat);
+        RN.phase(fr.t<x.C0?'Prepárate…':'Prepárate: '+clamp(k,1,4),true);
+        $('#td-now').innerHTML=nHtml(s.notes[s.callN||0]);
+        if(fr.t>=x.S){x.ph='sing';REC.start(fr.t);}
+      }
+      if(x.ph==='sing'){
+        const b=(fr.t-x.S)/x.beat;
+        const i=x.offs.findIndex((o,k)=>b>=o&&b<o+s.durs[k]);
+        if(s.callN&&(i<0?b<x.offs[s.callN]:i<s.callN)){
+          RN.phase('Escucha la pregunta…',false);
+          $('#td-now').innerHTML=nHtml(s.notes[s.callN]);
+        }else if(i>=0){
+          RN.phase(s.callN?'Responde':'Canta',true); $('#td-now').innerHTML=nHtml(s.notes[i]);
+          if(fr.m!=null){RN.g.push(fr.t,fr.m); if(b-x.offs[i]>=Math.min(0.25*s.durs[i],0.4)) x.buckets[i].push(fr.m);}
+        }
+        if(fr.t>=x.E){
+          const ref=s.notes.map((m,i)=>({m,off:x.S+x.offs[i]*x.beat-REC.t0,dur:s.durs[i]*x.beat*0.9}));
+          RN.finish(patternScore(s,x.buckets),ref);
+        }
+      }
+    }else if(s.type==='siren'){
+      if(x.ph==='demo'&&fr.t>=x.C0-0.05){
+        x.ph='count';
+        RN.g.clear(); RN.g.targets=[{a:x.S,b:x.S+x.h,m:s.lo,m2:s.hi},{a:x.S+x.h,b:x.E,m:s.hi,m2:s.lo}];
+        RN.g.fixed(x.S-0.5,x.E+0.2);
+      }
+      if(x.ph==='count'){RN.phase('Prepárate…',true); if(fr.t>=x.S){x.ph='sing';REC.start(fr.t);}}
+      if(x.ph==='sing'){
+        RN.phase('Sigue la franja',true);
+        const tg=RN.sirenAt(fr.t); x.tot++;
+        $('#td-now').innerHTML=nHtml(tg);
+        if(fr.m!=null){
+          RN.g.push(fr.t,fr.m); x.voiced++;
+          let d=(fr.m-tg)*100; d-=1200*Math.round(d/1200);
+          if(Math.abs(d)<=s.tol) x.hits++;
+        }
+        if(fr.t>=x.E){
+          const sc=Math.round(clamp(x.hits/Math.max(1,x.tot*0.85)*100,0,100));
+          const fb=x.voiced<8?'No te he oído durante la sirena. Canta más fuerte o acércate al micrófono.':cheer(sc)+' Has seguido la franja el '+Math.round(x.hits/Math.max(1,x.tot)*100)+' % del tiempo. Intenta que el sonido no se corte mientras subes y bajas.';
+          RN.finish({score:sc,fb:x.voiced>=8&&x.hits<5?'Te oigo, pero tu voz no ha seguido la franja. Mira la sirena: empieza abajo, sube despacio y vuelve a bajar sin cortar el sonido.':fb,silent:x.voiced<8},[{m:s.lo,m2:s.hi,off:x.S-REC.t0,dur:x.h},{m:s.hi,m2:s.lo,off:x.S+x.h-REC.t0,dur:x.h}]);
+        }
+      }
+    }else{
+      $('#td-now').innerHTML=fr.m!=null?nHtml(fr.m):'—';
+      if(fr.m!=null){
+        RN.g.push(fr.t,fr.m); RN.g.follow(fr.m);
+        const r=Math.round(fr.m);
+        if(x.run.n===r&&Math.abs(fr.m-r)<0.45){
+          if(fr.t-x.run.t0>=0.35) x.best=x.best==null?r:(s.which==='low'?Math.min(x.best,r):Math.max(x.best,r));
+        }else x.run={n:r,t0:fr.t};
+      }else x.run.n=null;
+      RN.phase('Quedan '+Math.max(1,Math.ceil(x.tEnd-fr.t))+' s',true);
+      if(fr.t>=x.tEnd){
+        if(x.best==null) RN.finish({range:true,fail:true,fb:'No he detectado ninguna nota estable. Pulsa Repetir y mantén cada nota medio segundo.'});
+        else{data.range[s.which]=x.best; RG.fix(s.which); save(); SC.fillTonic();
+          RN.finish({range:true,which:s.which,m:x.best,fb:(s.which==='low'?'Tu nota más grave: ':'Tu nota más aguda: ')+nTxt(x.best)+'.'});}
+      }
+    }
+    RN.g.draw(fr.t);
+  },
+  finish(r,ref){
+    RN.st='done'; RN.res[RN.i]=r; silenceAll();
+    const idx=RN.i;
+    if(REC.mr) REC.stop().then(blob=>{
+      if(blob&&RN.i===idx&&RN.st==='done'&&!r.silent){RN.recs[idx]={url:URL.createObjectURL(blob),ref:ref||[]};RN.showRec();}
+    });
+    $('#td-prog').style.width=((RN.i+1)/RN.steps.length*100)+'%';
+    $('#td-step-res').hidden=false; RN.showRec();
+    if(r.range){$('#td-step-score').innerHTML=r.fail?'—':nHtml(r.m);$('#td-step-unit').textContent=r.fail?'':'medido';}
+    else{$('#td-step-score').textContent=r.score;$('#td-step-unit').textContent='puntos';}
+    $('#td-step-notes').innerHTML=r.notes?r.notes.map(n=>'<span class="nchip '+(n.score>=70?'ok':n.score>=40?'near':'off')+'">'+nTxt(n.m)+'</span>').join(''):'';
+    $('#td-step-fb').textContent=r.fb||'';
+    RN.phase(r.range?(r.fail?'Sin medir':'Medido'):(r.score>=80?'¡Genial!':r.score>=55?'Bien':'Sigue practicando'),false);
+    RN.buttons();
+  },
+  showRec(){
+    const r=RN.recs[RN.i], box=$('#td-rec');
+    box.hidden=!r; $('#td-rec-note').hidden=!r;
+    if(r) $('#td-mix').hidden=!r.ref.length||!eng.ctx;
+  },
+  dropRec(i){const r=RN.recs[i]; if(r){URL.revokeObjectURL(r.url); delete RN.recs[i];} $('#td-rec').hidden=true; $('#td-rec-note').hidden=true;},
+  clearRecs(){Object.keys(RN.recs).forEach(k=>URL.revokeObjectURL(RN.recs[k].url)); RN.recs={};},
+  play(mix){
+    const r=RN.recs[RN.i]; if(!r) return;
+    stopPlay();
+    const a=new Audio(r.url); a.setAttribute('playsinline',''); player=a;
+    const p=a.play();
+    const go=()=>{if(mix&&eng.ctx){const base=eng.ctx.currentTime+0.02;
+      r.ref.forEach(n=>{const at=base+n.off; if(at+n.dur<base) return;
+        if(n.m2!=null) playGlide(n.m,n.m2,n.dur,Math.max(base,at),0.12); else playTone(n.m,n.dur,Math.max(base,at),0.12);});}};
+    if(p&&p.then) p.then(go).catch(()=>{}); else go();
+  },
+  abort(){if(RN.st==='running'){REC.cancel();silenceAll();RN.showStep();}},
+  next(){stopPlay(); RN.i++; if(RN.i>=RN.steps.length) RN.complete(); else RN.showStep(); window.scrollTo(0,0);},
+  exit(){
+    if(RN.st==='running'){REC.cancel();silenceAll();}
+    if(RN.res.some(r=>r&&!r.skipped)&&!confirm('¿Salir de la sesión? Perderás el progreso de hoy.')) return;
+    stopPlay(); RN.clearRecs(); RN.st='idle'; $('#td-run').hidden=true; TD.render();
+  },
+  complete(){
+    RN.st='idle'; stopPlay(); RN.clearRecs();
+    const P=prog(), d=RN.sess.day, scored=RN.res.filter(r=>r&&!r.skipped&&!r.range&&r.score!=null);
+    const avg=scored.length?Math.round(scored.reduce((a,r)=>a+r.score,0)/scored.length):0;
+    const afinVals=scored.filter(r=>!r.silent).map(r=>r.acc!=null?r.acc:r.score);
+    const afin=afinVals.length?Math.round(afinVals.reduce((a,b)=>a+b,0)/afinVals.length):null;
+    P.minutes=(P.minutes||0)+(Date.now()-RN.t0)/60000;
+    let levelMsg='', metricsHtml='', shown=avg;
+    if(RN.sess.test){
+      const holds=RN.res.slice(2,5).filter(r=>r&&!r.skipped&&r.acc!=null);
+      const scale=RN.res[5], echo=RN.res[6];
+      const mean=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
+      const tAfin=mean(holds.map(h=>h.acc).concat(scale&&!scale.skipped?[scale.score]:[]));
+      const estab=mean(holds.map(h=>h.stb));
+      const oido=echo&&!echo.skipped?echo.score:0;
+      const overall=Math.round(0.4*tAfin+0.3*estab+0.3*oido);
+      const rng=hasRange()?data.range.high-data.range.low:0;
+      const T={date:Date.now(),afin:tAfin,estab,oido,overall,range:rng};
+      const ini=P.tests.initial;
+      if(d===1){P.tests.initial=T; P.level=clamp(1+Math.floor(overall/15),1,7);}
+      else P.tests.final=T;
+      metricsHtml=metricsBlock(T,d===TOTAL_DAYS?ini:null);
+      levelMsg=d===1?'Tu puntuación de voz es '+overall+'. Empiezas el programa en el nivel '+P.level+'.':'Tu puntuación de voz final es '+overall+(ini?' (empezaste con '+ini.overall+').':'.');
+      shown=overall; $('#td-done-unit').textContent='puntuación de voz';
+    }else{
+      const old=P.level;
+      if(avg>=75) P.level=Math.min(10,P.level+1); else if(avg<50&&scored.length) P.level=Math.max(1,P.level-1);
+      levelMsg=P.level>old?'¡Subes al nivel '+P.level+'! Los ejercicios serán un poco más exigentes.':P.level<old?'Bajamos al nivel '+P.level+' para afianzar la base. Es parte del proceso.':'Sigues en el nivel '+P.level+'. Mañana, a por más.';
+      // Mini mejora frente a la sesión anterior
+      if(afin!=null){
+        const prev=P.log.slice().reverse().find(e=>e.afin!=null);
+        const base=prev||(P.tests.initial?{day:1,afin:P.tests.initial.afin}:null);
+        if(base){const dlt=afin-base.afin, ref=base.day===1?'la prueba inicial':'el día '+base.day;
+          levelMsg+=' '+(dlt>=3?'Hoy has afinado '+dlt+' puntos mejor que en '+ref+'. 📈':Math.abs(dlt)<3?'Tu afinación se mantiene estable respecto a '+ref+'.':'Hoy ha costado un poco más que en '+ref+': es normal, la voz cambia de un día a otro.');}
+      }
+      $('#td-done-unit').textContent='puntos de media';
+    }
+    $('#td-done-score').textContent=shown;
+    if(d>=P.day) P.day=Math.min(TOTAL_DAYS+1,d+1);
+    P.log.push({day:d,score:shown,afin:RN.sess.test?(P.tests[d===1?'initial':'final']||{}).afin:afin,ts:Date.now(),test:!!RN.sess.test});
+    save();
+    record('program',shown,(RN.sess.test?'Prueba de voz, día ':'Programa, día ')+d);
+    $('#td-done-tag').textContent='Día '+d+' de '+TOTAL_DAYS;
+    $('#td-done-title').textContent=RN.sess.test?(d===1?'¡Prueba inicial completada!':'¡Programa completado!'):'¡Sesión completada!';
+    $('#td-done-level').textContent=levelMsg;
+    $('#td-done-metrics').innerHTML=metricsHtml;
+    $('#td-done-list').innerHTML=RN.steps.map((s,i)=>{const r=RN.res[i]||{};const v=r.skipped?'saltado':r.range?(r.fail?'—':nTxt(r.m)):r.score;return '<li><span style="flex:1">'+esc(s.title||s.label||'')+'</span><b>'+v+'</b></li>';}).join('');
+    $('#td-done-coach').innerHTML='<b>Consejo de tu entrenador</b>'+esc(d===TOTAL_DAYS?'Has completado los 30 días. Repite el programa para seguir subiendo de nivel o practica libremente con Imitar y Escalas.':(RN.sess.test?TEST_TIP:weekOf(d).tip));
+    // Momento de pago: al terminar el día 3
+    const box=$('#td-done-pro');
+    if(d===FREE_DAYS&&!PRO.is()){
+      const ini=P.tests.initial, a0=ini?ini.afin:null, dl=(a0!=null&&afin!=null)?afin-a0:null;
+      box.innerHTML='<span class="pro-tag">TU PROGRESO</span>'+
+        '<h3 style="font-size:1.4rem;margin-top:10px">'+(dl>0?'3 días, y ya se nota':'Has completado tus 3 primeros días')+'</h3>'+
+        (a0!=null&&afin!=null?'<p style="margin-top:8px">Afinación: <b>'+a0+'</b> en la prueba inicial → <b>'+afin+'</b> hoy'+(dl>0?' <span class="delta up">+'+dl+'</span>':'')+'</p>':'')+
+        '<p style="margin-top:8px">'+(dl>0?'En solo 3 días ya has mejorado. ':'Los primeros días sirven para que tu oído se acostumbre: los cambios grandes llegan en las semanas 2 y 3. ')+
+        'Te quedan 27 días: notas sostenidas, saltos, melodías y la prueba final para ver todo lo que has avanzado.</p>'+
+        '<button class="btn primary big" id="td-unlock" type="button" style="width:100%;margin-top:14px">Seguir con los 27 días</button>';
+      box.hidden=false;
+      $('#td-unlock').onclick=()=>openPro('Llevas 3 de 30 días. Desbloquea el programa completo y llega a tu prueba final.');
+    }else box.hidden=true;
+    $('#td-run').hidden=true; $('#td-done').hidden=false; window.scrollTo(0,0);
+  }
+};
+function metricsBlock(T,ini){
+  const dl=(k)=>{if(!ini) return ''; const v=T[k]-ini[k]; if(!v) return ''; return '<span class="delta '+(v>0?'up':'down')+'">'+(v>0?'+':'')+v+'</span>';};
+  return '<div class="metrics"><div><b>'+T.overall+dl('overall')+'</b><span>Puntuación de voz</span></div><div><b>'+T.afin+dl('afin')+'</b><span>Afinación</span></div><div><b>'+T.estab+dl('estab')+'</b><span>Estabilidad</span></div><div><b>'+T.oido+dl('oido')+'</b><span>Oído</span></div><div><b>'+T.range+dl('range')+'</b><span>Semitonos de rango</span></div></div>';
+}
+$('#td-go').addEventListener('click',RN.onGo);
+$('#td-play').addEventListener('click',()=>RN.play(false));
+$('#td-mix').addEventListener('click',()=>RN.play(true));
+$('#td-del').addEventListener('click',()=>{stopPlay();RN.dropRec(RN.i);});
+$('#td-skip').addEventListener('click',RN.onSkip);
+$('#td-exit').addEventListener('click',RN.exit);
+$('#td-back').addEventListener('click',()=>{$('#td-done').hidden=true;TD.render();});
+
+const TD={
+  enter(){if(!$('#td-run').hidden){RN.g.resize();return;} if($('#td-done').hidden) TD.render();},
+  onFrame(fr){RN.onFrame(fr);},
+  render(){
+    const P=prog(), d=Math.min(P.day,TOTAL_DAYS), finished=P.day>TOTAL_DAYS;
+    $('#td-home').hidden=false; $('#td-run').hidden=true; $('#td-done').hidden=true;
+    const dots=$('#td-days'); dots.innerHTML='';
+    for(let i=1;i<=TOTAL_DAYS;i++){const el=document.createElement('i');el.textContent=i;
+      if(i<P.day) el.className='done'; else if(i===d&&!finished) el.className='now';
+      if(isTestDay(i)) el.classList.add('test'); dots.appendChild(el);}
+    if(finished){
+      $('#td-week').textContent='Programa completado';
+      $('#td-title').textContent='¡Has terminado los 30 días!';
+      $('#td-text').textContent='Mira abajo cuánto has mejorado. Puedes repetir el programa desde tu nivel actual para seguir progresando.';
+      $('#td-card-kicker').textContent='Siguiente paso';
+      $('#td-card-title').textContent='Repetir el programa';
+      $('#td-card-list').innerHTML='<li>Empiezas de nuevo en el día 2, manteniendo tu nivel '+P.level+'</li>';
+      $('#td-coach').innerHTML='<b>Consejo de tu entrenador</b>La constancia es lo que más mejora la voz: unos minutos al día valen más que una sesión larga a la semana.';
+      $('#td-start').textContent='Repetir programa';
+    }else{
+      const test=isTestDay(d), w=weekOf(d);
+      $('#td-week').textContent=test?(d===1?'Antes de empezar':'Último día'):'Semana '+w.n+' · Nivel '+P.level;
+      $('#td-title').textContent=test?(d===1?'Afina en 30 días':'Prueba de voz final'):w.title;
+      $('#td-text').textContent=test?(d===1?'Un programa de 10 minutos al día para pasar de no saber cantar a cantar afinado. Empezamos midiendo tu voz.':'Repite la prueba del primer día y descubre cuánto has mejorado.'):w.text;
+      $('#td-card-kicker').textContent='Día '+d+' de '+TOTAL_DAYS+(test?' · unos 4 minutos':' · unos 6 minutos');
+      $('#td-card-title').textContent=test?(d===1?'Prueba de voz inicial':'Prueba de voz final'):'Sesión de hoy';
+      $('#td-card-list').innerHTML=(test?testItems():dayItems(d)).map(it=>'<li>'+esc(it.label)+'</li>').join('');
+      $('#td-coach').innerHTML='<b>Consejo de tu entrenador</b>'+esc(test?TEST_TIP:w.tip);
+      const locked=d>FREE_DAYS&&!PRO.is();
+      $('#td-start').textContent=locked?'Desbloquear el programa completo':(test?'Empezar la prueba':'Empezar sesión');
+    }
+    const tb=$('#td-tests'), ini=P.tests.initial, fin=P.tests.final;
+    if(ini){tb.hidden=false; tb.innerHTML='<h3 style="font-size:1.2rem">'+(fin?'Tu mejora':'Tu punto de partida')+'</h3>'+metricsBlock(fin||ini,fin?ini:null);}
+    else tb.hidden=true;
+  },
+  start(){
+    const P=prog();
+    if(P.day>TOTAL_DAYS){
+      if(!PRO.is()){openPro('Repetir el programa es una función Premium.');return;}
+      P.day=2; save(); TD.render(); return;
+    }
+    const d=P.day;
+    if(d>FREE_DAYS&&!PRO.is()){openPro('Has completado tus '+FREE_DAYS+' días gratis. Desbloquea los 30 días del programa para seguir mejorando.');return;}
+    if(!eng.on){showGate('paused');return;}
+    const test=isTestDay(d);
+    RN.begin({day:d,test,L:test?1:P.level,items:test?testItems():dayItems(d)});
+  }
+};
+$('#td-start').addEventListener('click',TD.start);
+$('#pg-range').addEventListener('click',()=>go('range'));
+
 /* ---------- Navegación ---------- */
-const views={tuner:TN,imitate:IM,scales:SC,range:RG,progress:PG};
-let cur='tuner';
-function abortAll(){silenceAll();IM.reset();SC.reset();RG.cancel();}
+const views={today:TD,tuner:TN,imitate:IM,scales:SC,range:RG,progress:PG};
+let cur='today';
+function abortAll(){stopPlay();silenceAll();IM.reset();SC.reset();RG.cancel();RN.abort();}
 function go(v){
   if(v===cur) return;
   abortAll();
@@ -1135,8 +1800,8 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden&&eng.on) st
 addEventListener('pagehide',()=>{if(eng.on) stopMic();});
 
 // Vista inicial desde el enlace
-const h0=location.hash.slice(1); if(views[h0]&&h0!=='tuner') go(h0);
-IM.hint(); RG.render();
+const h0=location.hash.slice(1); if(views[h0]&&h0!==cur) go(h0);
+IM.hint(); RG.render(); if(cur==='today') TD.render();
 setStatus(false);
 
 /* ---------- Ventana Premium ---------- */
@@ -1146,9 +1811,20 @@ function renderPro(){
   const on=PRO.is();
   $('#pro-free').hidden=on; $('#pro-active').hidden=!on;
   $('#pro-title').textContent=on?'Afina Premium':'Canta sin límites';
-  if(on){const k=data.premium.key;$('#pro-active-key').textContent='Clave: '+k.slice(0,4)+'••••'+k.slice(-4);}
+  if(on){
+    if(PRO.tester()){
+      $('#pro-active-text').textContent='Tienes acceso completo de probador hasta el '+new Date(data.tester.until).toLocaleDateString('es-ES',{day:'numeric',month:'long'})+'. ¡Gracias por ayudar a mejorar Afina!';
+      $('#pro-active-key').textContent='Código: '+data.tester.code; $('#pro-deactivate').textContent='Quitar acceso de probador';
+    }else{
+      const k=data.premium.key; $('#pro-active-text').textContent='Tienes Afina Premium activado en este dispositivo. ¡Gracias por apoyar la app!';
+      $('#pro-active-key').textContent='Clave: '+k.slice(0,4)+'••••'+k.slice(-4); $('#pro-deactivate').textContent='Desactivar en este dispositivo';
+    }
+  }
+  $('#pro-price').textContent=CONFIG.PRICE;
+  const gu=$('#pro-guarantee'); gu.hidden=!CONFIG.GUARANTEE_DAYS;
+  if(CONFIG.GUARANTEE_DAYS) gu.textContent='Garantía de '+CONFIG.GUARANTEE_DAYS+' días: si no te convence, te devolvemos el dinero.';
   const buy=$('#pro-buy');
-  if(CONFIG.CHECKOUT_URL){buy.href=CONFIG.CHECKOUT_URL;buy.classList.remove('disabled');buy.removeAttribute('aria-disabled');buy.textContent='Hazte Premium';}
+  if(CONFIG.CHECKOUT_URL){buy.href=CONFIG.CHECKOUT_URL;buy.classList.remove('disabled');buy.removeAttribute('aria-disabled');buy.textContent='Desbloquear por '+CONFIG.PRICE;}
   else{buy.href='#';buy.classList.add('disabled');buy.setAttribute('aria-disabled','true');buy.textContent='Compra disponible muy pronto';}
 }
 let proReturn=null;
@@ -1160,7 +1836,7 @@ function openPro(reason){
   setTimeout(()=>{const f=PRO.is()?$('#pro-deactivate'):$('#pro-key');if(f&&!f.value)$('#pro-close').focus();},50);
 }
 function closePro(){proEl.hidden=true; if(proReturn&&proReturn.focus) proReturn.focus();}
-function refreshPro(){SC.marks();IM.hint();if(cur==='progress')PG.render();
+function refreshPro(){SC.marks();IM.hint();if(cur==='progress')PG.render();if(cur==='today'&&!$('#td-home').hidden)TD.render();
   if(scaleLocked(SC.ex)){SC.ex=CONFIG.FREE_SCALES[0];const i=document.querySelector('#sc-ex input[value="'+SC.ex+'"]');if(i)i.checked=true;SC.fillTonic();SC.tipText();}}
 $('#pro-close').addEventListener('click',closePro);
 proEl.addEventListener('click',e=>{if(e.target===proEl) closePro();});
@@ -1172,7 +1848,7 @@ $('#pro-activate').addEventListener('click',async()=>{
   b.disabled=true; b.textContent='Comprobando…'; setProMsg('');
   const r=await PRO.activate(key);
   b.disabled=false; b.textContent='Activar';
-  if(r.ok){$('#pro-key').value='';renderPro();$('#pro-reason').hidden=true;setProMsg('¡Premium activado! Ya tienes todo desbloqueado.','good');refreshPro();}
+  if(r.ok){$('#pro-key').value='';renderPro();$('#pro-reason').hidden=true;setProMsg(r.tester?'¡Acceso de probador activado! Tienes todo desbloqueado durante '+CONFIG.TESTER_DAYS+' días.':'¡Premium activado! Ya tienes todo desbloqueado.','good');refreshPro();}
   else setProMsg(r.error,'bad');
 });
 $('#pro-key').addEventListener('keydown',e=>{if(e.key==='Enter') $('#pro-activate').click();});
@@ -1186,6 +1862,44 @@ $('#pro-deactivate').addEventListener('click',async()=>{
 // Clave en el enlace (por ejemplo, desde el correo de compra): ?license_key=XXXX
 try{const q=new URLSearchParams(location.search).get('license_key'); if(q&&!PRO.is()){$('#pro-key').value=q; history.replaceState(null,'',location.pathname+location.hash); setTimeout(()=>openPro(),300);}}catch(e){}
 SC.marks(); PRO.recheck();
+
+/* ---------- Panel interno (5 toques en el logo) ---------- */
+const APP_VERSION='1.4';
+let taps=[];
+$('.brand').addEventListener('click',()=>{const t=Date.now();taps=taps.filter(x=>t-x<2500);taps.push(t);if(taps.length>=5){taps=[];openStats();}});
+function statsData(){
+  const P=data.program||{day:1,level:1,tests:{},log:[]};
+  const sess=P.log.filter(e=>!e.test);
+  return {version:APP_VERSION,fecha:new Date().toISOString().slice(0,10),
+    dia_programa:Math.min(P.day,TOTAL_DAYS+1)-1,nivel:P.level,sesiones_programa:P.log.length,
+    dias_practica:data.days.length,racha:PG.streak(),minutos_programa:Math.round(P.minutes||0),minutos_micro:Math.round((data.usage||0)/60),
+    prueba_inicial:P.tests.initial?P.tests.initial.overall:null,prueba_final:P.tests.final?P.tests.final.overall:null,
+    media_sesiones:sess.length?Math.round(sess.reduce((a,e)=>a+e.score,0)/sess.length):null,
+    premium:PRO.is()?(PRO.tester()?'probador':'si'):'no',instalada:standalone,dispositivo:deviceName(),
+    puntuaciones:P.log.map(e=>({dia:e.day,p:e.score,afin:e.afin}))};
+}
+function openStats(){
+  const d=statsData();
+  const row=(k,v)=>'<li><span>'+k+'</span><b>'+(v==null?'—':esc(String(v)))+'</b></li>';
+  $('#stats-body').innerHTML='<ul class="stat-list">'+
+    row('Versión',d.version)+row('Días del programa completados',d.dia_programa)+row('Nivel actual',d.nivel)+
+    row('Sesiones del programa',d.sesiones_programa)+row('Días con práctica',d.dias_practica)+row('Racha actual',d.racha)+
+    row('Minutos en el programa',d.minutos_programa)+row('Minutos con el micro activo',d.minutos_micro)+
+    row('Prueba inicial',d.prueba_inicial)+row('Prueba final',d.prueba_final)+row('Media de las sesiones',d.media_sesiones)+
+    row('Premium',d.premium)+row('Instalada como app',d.instalada?'sí':'no')+row('Dispositivo',d.dispositivo)+'</ul>'+
+    (d.puntuaciones.length?'<h3 style="font-size:1.1rem;margin-top:16px">Puntuación por día</h3><ul class="stat-list">'+d.puntuaciones.map(x=>row('Día '+x.dia,x.p+(x.afin!=null?' · afinación '+x.afin:''))).join('')+'</ul>':'');
+  $('#stats-msg').textContent=''; $('#stats').hidden=false;
+}
+$('#stats-close').addEventListener('click',()=>$('#stats').hidden=true);
+$('#stats').addEventListener('click',e=>{if(e.target.id==='stats') $('#stats').hidden=true;});
+addEventListener('keydown',e=>{if(e.key==='Escape') $('#stats').hidden=true;});
+$('#stats-copy').addEventListener('click',async()=>{
+  try{await navigator.clipboard.writeText(JSON.stringify(statsData(),null,1));$('#stats-msg').textContent='Datos copiados. Pégalos en un mensaje.';$('#stats-msg').className='pro-msg good';}
+  catch(e){$('#stats-msg').textContent='No se han podido copiar: haz una captura de pantalla.';$('#stats-msg').className='pro-msg bad';}
+});
+// Tiempo de uso con el micro activo
+let usageTick=0;
+setInterval(()=>{if(eng.on&&!document.hidden){data.usage=(data.usage||0)+15; if(++usageTick%4===0) save();}},15000);
 
 /* ---------- App instalable (PWA) ---------- */
 const standalone=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
