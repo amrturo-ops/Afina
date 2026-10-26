@@ -1,6 +1,6 @@
 // Afina: service worker para que la app funcione sin conexión.
 // Al publicar una versión nueva, cambia el número de VERSION.
-const VERSION = 'afina-v4';
+const VERSION = 'afina-v5';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
