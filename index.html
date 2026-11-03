@@ -291,6 +291,24 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
 .more{color:var(--muted);padding:12px 0}
 .more button{background:none;border:0;color:var(--brand);font-weight:700;cursor:pointer;padding:0;min-height:32px}
 
+/* Test de 30 segundos */
+.qt-kick{font-weight:800;text-transform:uppercase;letter-spacing:.08em;font-size:.82rem;color:var(--brand);margin:0 0 6px}
+.qt-top{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:10px}
+.qt-top b{font-family:var(--display);font-size:1.5rem}
+.qt-top span{color:var(--muted);font-weight:700}
+.qt-phase{font-family:var(--display);font-weight:800;font-size:2rem;text-align:center;margin:12px 0 4px;min-height:1.2em}
+.qt-phase.sing{color:var(--ok)}
+.qt-bar{height:8px;border-radius:4px;background:var(--surface-2);overflow:hidden;margin-top:12px}
+.qt-bar i{display:block;height:100%;width:0;background:var(--brand);transition:width .2s linear}
+.qt-score{display:flex;align-items:baseline;gap:6px;justify-content:center;margin:4px 0 6px}
+.qt-score b{font-family:var(--display);font-weight:800;font-size:6rem;line-height:.9;color:var(--brand);letter-spacing:-.04em}
+.qt-score span{font-weight:700;color:var(--muted);font-size:1.4rem}
+.qt-parts{list-style:none;padding:0;margin:14px 0 4px;display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.qt-parts li{background:var(--surface-2);border-radius:12px;padding:10px 12px;font-weight:700;display:flex;justify-content:space-between}
+.qt-parts li span{color:var(--muted);font-weight:600}
+.qt-cta{display:grid;gap:10px;margin-top:16px}
+.qt-reto{margin:12px 0 0;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,var(--brand) 14%,transparent);font-weight:700}
+#qt-cv{height:200px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 </head>
@@ -531,6 +549,10 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
   <!-- PROGRESO -->
   <section class="view" id="v-progress" aria-labelledby="h-progress">
     <h2 id="h-progress">Tu progreso</h2>
+    <div class="panel" style="margin-top:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
+      <div><b>Test de afinación de 30 segundos</b><div class="small-label" id="pg-qt-last">Mide tu oído y reta a tus amigos.</div></div>
+      <button class="btn primary small" id="pg-qt" type="button">Hacer el test</button>
+    </div>
     <div class="panel" style="margin-top:16px">
       <div class="big-stat"><b id="pg-streak">0</b><span id="pg-streak-l">días seguidos practicando</span></div>
       <div class="week" id="pg-week"></div>
@@ -596,6 +618,42 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
     <button class="btn primary big" id="cele-ok" type="button">¡Seguir!</button>
   </div>
 </div>
+<div class="gate intro" id="qt" role="dialog" aria-modal="true" aria-labelledby="qt-title" hidden>
+  <div class="gate-card">
+    <div id="qt-start">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--brand)"/><path d="M5 17c2.5-6 4-6 5.5 0s3 6 5 0 3-6 5 0 3 6 6 0" fill="none" stroke="var(--brand-ink)" stroke-width="2.6" stroke-linecap="round"/></svg>
+      <p class="qt-kick">Test de afinación · 30 segundos</p>
+      <h1 id="qt-title">¿Cuánto afinas?</h1>
+      <p id="qt-lede">Escucha 3 notas y una sirena, y repítelas con tu voz. Al final verás tu nota de 0 a 100.</p>
+      <p class="qt-reto" id="qt-reto-in" hidden></p>
+      <button class="btn primary big" id="qt-go" type="button" style="width:100%;margin-top:16px">Hacer el test</button>
+      <button class="btn small" id="qt-skip" type="button" style="width:100%;margin-top:8px;border:0;background:none">Ahora no, ver la app</button>
+      <p class="fine">Mejor con auriculares y en un sitio tranquilo. El sonido se analiza en tu dispositivo y no se envía a ningún sitio.</p>
+    </div>
+    <div id="qt-run" hidden>
+      <div class="qt-top"><b id="qt-step">Nota 1 de 3</b><span id="qt-hint">Canta «aaa»</span></div>
+      <canvas id="qt-cv" class="graph" aria-label="Tu voz y la nota objetivo"></canvas>
+      <div class="qt-phase" id="qt-phase" aria-live="polite">Escucha…</div>
+      <div class="qt-bar" aria-hidden="true"><i id="qt-prog"></i></div>
+      <button class="btn small" id="qt-cancel" type="button" style="width:100%;margin-top:12px;border:0;background:none">Cancelar</button>
+    </div>
+    <div id="qt-res" hidden>
+      <p class="qt-kick" style="text-align:center">Tu afinación</p>
+      <div class="qt-score"><b id="qt-num">0</b><span>/100</span></div>
+      <h1 id="qt-label" style="text-align:center"></h1>
+      <p id="qt-text" style="text-align:center"></p>
+      <p class="qt-reto" id="qt-reto-out" hidden></p>
+      <ul class="qt-parts" id="qt-parts"></ul>
+      <div class="qt-cta">
+        <button class="btn primary big" id="qt-share" type="button">Retar a un amigo</button>
+        <button class="btn big" id="qt-program" type="button">Mejorar en 30 días (gratis)</button>
+        <button class="btn small" id="qt-again" type="button" style="border:0;background:none">Repetir el test</button>
+      </div>
+      <p class="pro-msg" id="qt-msg" role="status"></p>
+    </div>
+  </div>
+</div>
+
 <div class="gate intro" id="intro" role="dialog" aria-modal="true" aria-label="Bienvenida" hidden>
   <div class="gate-card">
     <div class="slide">
@@ -614,7 +672,7 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
     <div class="slide" hidden>
       <div class="intro-big" aria-hidden="true">43 <span>→</span> 68</div>
       <h1>Mide tu progreso</h1>
-      <p>Empiezas con una prueba de voz de 4 minutos y la repites el día 30 para ver cuánto has mejorado. Tu voz nunca sale de tu dispositivo.</p>
+      <p>Empiezas con una prueba de voz de 3 minutos y la repites el día 30 para ver cuánto has mejorado. Tu voz nunca sale de tu dispositivo.</p>
     </div>
     <div class="pager" aria-hidden="true"><i class="on"></i><i></i><i></i></div>
     <button class="btn primary big" id="intro-next" type="button" style="width:100%;margin-top:18px">Siguiente</button>
@@ -915,6 +973,7 @@ function tick(){
   const db=20*Math.log10(rms+1e-9);
   meterEl.style.width=(clamp((db+60)/50,0,1)*100).toFixed(1)+'%';
   const fr={t:eng.ctx.currentTime,rms,m};
+  if(typeof QT!=='undefined'&&QT.active){QT.onFrame(fr);return;}
   const v=views[cur]; if(v.onFrame) v.onFrame(fr);
 }
 
@@ -1321,6 +1380,7 @@ document.querySelectorAll('[data-adj]').forEach(b=>b.addEventListener('click',()
 
 /* ---------- Vista: Progreso ---------- */
 const PG={
+  qtLine(){const q=data.qt; const el=$('#pg-qt-last'); if(el) el.textContent=q?'Último resultado: '+q.score+'/100'+(data.qtBest&&data.qtBest>q.score?' · récord '+data.qtBest:''):'Mide tu oído y reta a tus amigos.';},
   enter(){PG.render();},
   streak(){
     const set=new Set(data.days); const d=new Date();
@@ -1329,6 +1389,7 @@ const PG={
     return n;
   },
   render(){
+    PG.qtLine();
     const s=PG.streak();
     $('#pg-streak').textContent=s;
     $('#pg-streak-l').textContent=s===1?'día seguido practicando':'días seguidos practicando';
@@ -1573,9 +1634,7 @@ function testItems(){
   return [
     {label:'Tu nota más grave',make:()=>({type:'range',which:'low',title:'Tu nota más grave',text:'Canta «aaa» en una nota cómoda y baja despacio hasta la más grave que puedas sostener. Mantén cada nota un momento.'})},
     {label:'Tu nota más aguda',make:()=>({type:'range',which:'high',title:'Tu nota más aguda',text:'Ahora sube despacio hasta la nota más aguda que puedas sostener sin forzar. Si raspa o duele, para.'})},
-    {label:'Nota grave',make:()=>mkHold('Nota grave',T,0.25,4)},
-    {label:'Nota media',make:()=>mkHold('Nota media',T,0.55,4)},
-    {label:'Nota aguda',make:()=>mkHold('Nota aguda',T,0.85,4)},
+    {label:'Nota larga',make:()=>mkHold('Nota larga',T,0.5,4)},
     {label:'Cinco notas',make:()=>mkPattern('scale','Cinco notas',EX.mayor5.tip+' Primero lo escuchas y después lo cantas siguiendo el pulso.',EX.mayor5.steps,null,1,{bpm:66,demo:true})},
     {label:'Eco de 3 notas',make:()=>mkEcho(3,[1,2],1,'Eco de 3 notas')}
   ];
@@ -1888,8 +1947,8 @@ const RN={
     P.minutes=(P.minutes||0)+(Date.now()-RN.t0)/60000;
     let levelMsg='', metricsHtml='', shown=avg;
     if(RN.sess.test){
-      const holds=RN.res.slice(2,5).filter(r=>r&&!r.skipped&&r.acc!=null);
-      const scale=RN.res[5], echo=RN.res[6];
+      const holds=RN.res.slice(2,3).filter(r=>r&&!r.skipped&&r.acc!=null);
+      const scale=RN.res[3], echo=RN.res[4];
       const mean=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):0;
       const tAfin=mean(holds.map(h=>h.acc).concat(scale&&!scale.skipped?[scale.score]:[]));
       const estab=mean(holds.map(h=>h.stb));
@@ -2041,7 +2100,7 @@ const TD={
       $('#td-title').textContent=test?(d===1?'Afina en 30 días':'Prueba de voz final'):ch?'Reto de la semana '+w.n:w.title;
       $('#td-text').textContent=test?(d===1?'Un programa de 10 minutos al día para pasar de no saber cantar a cantar afinado. Empezamos midiendo tu voz.':'Repite la prueba del primer día y descubre cuánto has mejorado.')
         :ch?'Demuestra lo que has aprendido esta semana para pasar a la siguiente.':w.text;
-      $('#td-card-kicker').textContent='Día '+d+' de '+TOTAL_DAYS+(test?' · unos 4 minutos':ch?' · reto':' · unos 6 minutos');
+      $('#td-card-kicker').textContent='Día '+d+' de '+TOTAL_DAYS+(test?' · unos 3 minutos':ch?' · reto':' · unos 6 minutos');
       $('#td-card-title').textContent=test?(d===1?'Prueba de voz inicial':'Prueba de voz final'):ch?'Reto: '+CH_MIN+' puntos para pasar':'Sesión de hoy';
       $('#td-card-list').innerHTML=(test?testItems():dayItems(d)).map(it=>'<li>'+esc(it.label)+'</li>').join('');
       $('#td-coach').innerHTML='<b>Consejo de tu entrenador</b>'+esc(test?TEST_TIP:ch?'Necesitas '+CH_MIN+' puntos de media para pasar a la semana '+(w.n+1)+'. Tienes '+CH_TRIES+' intentos'+(c?' (llevas '+c.tries+', tu mejor: '+c.best+')':'')+'; después podrás seguir igualmente. Respira y ve con calma.':w.tip);
@@ -2184,6 +2243,173 @@ function addReminder(){
   $('#rm-msg').textContent='Abre el archivo descargado y pulsa «Añadir» para guardarlo en tu calendario.';
 }
 $('#rm-add').addEventListener('click',()=>{addReminder();track('recordatorio');});
+
+/* ---------- Test de afinación de 30 segundos (para compartir) ---------- */
+const QT={
+  active:false, steps:[], i:0, t0:0, res:[], pts:[], challenge:null, last:null,
+  open(src){
+    QT.abort(); $('#qt').hidden=false; QT.show('start');
+    const rc=QT.challenge;
+    $('#qt-reto-in').hidden=!rc; if(rc) $('#qt-reto-in').textContent='Te han retado: ¿superas un '+rc+'?';
+    track('test30-abierto'+(src?'-'+src:''));
+  },
+  show(w){['start','run','res'].forEach(k=>$('#qt-'+k).hidden=k!==w);},
+  close(){QT.abort(); $('#qt').hidden=true;},
+  build(){
+    const N=(m,k)=>({kind:'note',m,lab:'Nota '+k+' de 3',ref:1.1,gap:0.35,sing:2.6});
+    return [N(60,1),N(64,2),N(62,3),{kind:'siren',a:57,b:64,lab:'Sirena',ref:4,gap:0.45,sing:4}];
+  },
+  async go(){
+    if(!eng.on){ await startMic(); if(!eng.on){ $('#qt').hidden=true; return; } }
+    QT.steps=QT.build(); QT.res=[]; QT.i=-1; QT.active=true; QT.show('run');
+    QT.cv=$('#qt-cv'); QT.resize(); QT.colors=readQtColors();
+    track('test30-empezado'); QT.next();
+  },
+  next(){
+    QT.i++; if(QT.i>=QT.steps.length){QT.finish();return;}
+    const st=QT.steps[QT.i], at=eng.ctx.currentTime+0.25;
+    QT.t0=at; QT.pts=[]; st.frames=0; st.voiced=[];
+    if(st.kind==='note') playTone(st.m,st.ref,at,0.3);
+    else{playGlide(st.a,st.b,st.ref/2,at,0.24); playGlide(st.b,st.a,st.ref/2,at+st.ref/2,0.24);}
+    $('#qt-step').textContent=st.lab;
+    $('#qt-hint').textContent=st.kind==='note'?'Repite la nota':'Sube y baja con la línea';
+  },
+  target(st,u){ if(st.kind==='note') return st.m; u=clamp(u,0,1); return u<0.5?st.a+(st.b-st.a)*(u/0.5):st.b-(st.b-st.a)*((u-0.5)/0.5); },
+  onFrame(fr){
+    const st=QT.steps[QT.i]; if(!st) return;
+    const el=fr.t-QT.t0, sStart=st.ref+st.gap, total=sStart+st.sing;
+    const listening=el<sStart, ph=$('#qt-phase');
+    const want=listening?'Escucha…':'¡Canta!';
+    if(ph.textContent!==want){ph.textContent=want; ph.classList.toggle('sing',!listening);}
+    if(!listening&&el<=total){
+      const u=(el-sStart)/st.sing, tg=QT.target(st,u);
+      st.frames++;
+      if(fr.m!=null){let e=fr.m-tg; e-=12*Math.round(e/12); st.voiced.push({u,e}); QT.pts.push({x:el/total,y:tg+e,e});}
+    }
+    const done=QT.steps.slice(0,QT.i).reduce((a,s)=>a+s.ref+s.gap+s.sing,0);
+    const all=QT.steps.reduce((a,s)=>a+s.ref+s.gap+s.sing,0);
+    $('#qt-prog').style.width=(clamp((done+Math.max(0,el))/all,0,1)*100).toFixed(1)+'%';
+    QT.draw(st,el,total,sStart);
+    if(el>total+0.15){QT.res.push(QT.score(st)); QT.next();}
+  },
+  score(st){
+    if(st.kind==='note'){
+      const v=st.voiced.filter(p=>p.u>0.14).map(p=>p.e*100).sort((a,b)=>a-b);
+      const usable=Math.max(1,Math.round(st.frames*0.86));
+      if(v.length<8) return {kind:'note',score:0,silent:true};
+      const med=Math.abs(v[v.length>>1]), cov=clamp((v.length/usable)/0.5,0,1);
+      return {kind:'note',score:Math.round(clamp(100-(med-20),0,100)*cov),cents:Math.round(med)};
+    }
+    const v=st.voiced; if(v.length<10) return {kind:'siren',score:0,silent:true};
+    const avg=v.reduce((a,p)=>a+clamp(1-(Math.abs(p.e)-0.5)/1.0,0,1),0)/v.length;
+    const cov=clamp((v.length/Math.max(1,st.frames))/0.6,0,1);
+    return {kind:'siren',score:Math.round(100*avg*cov)};
+  },
+  finish(){
+    QT.active=false; silenceAll();
+    const notes=QT.res.filter(r=>r.kind==='note'), sir=QT.res.find(r=>r.kind==='siren')||{score:0};
+    const nAvg=notes.length?notes.reduce((a,r)=>a+r.score,0)/notes.length:0;
+    const total=Math.round(0.6*nAvg+0.4*sir.score);
+    const silent=QT.res.every(r=>r.silent);
+    QT.last={score:total,notes:Math.round(nAvg),siren:sir.score,date:Date.now()};
+    data.qt=QT.last; if(!data.qtBest||total>data.qtBest) data.qtBest=total; save();
+    QT.renderResult(silent); track('test30-terminado');
+    if(QT.challenge) track(total>QT.challenge?'test30-reto-superado':'test30-reto-no-superado');
+  },
+  label(s){
+    if(s>=85) return ['¡Oído de cantante!','Afinas muy bien. Con el programa de 30 días puedes pulir la estabilidad y ganar notas.'];
+    if(s>=70) return ['Muy buen oído','Vas por muy buen camino. Unos minutos al día y llegarás al 85.'];
+    if(s>=50) return ['Buen punto de partida','Tu oído responde. Con práctica diaria, esta nota sube.'];
+    return ['Tu oído está por despertar','Es normal al empezar: el oído se entrena como un músculo. El programa empieza justo desde aquí.'];
+  },
+  renderResult(silent){
+    const L=QT.last; QT.show('res'); $('#qt-msg').textContent='';
+    if(silent){
+      $('#qt-num').textContent='–'; $('#qt-label').textContent='No te hemos oído';
+      $('#qt-text').textContent='Comprueba que el micrófono está activo y canta un poco más fuerte, cerca del móvil.';
+      $('#qt-parts').innerHTML=''; $('#qt-reto-out').hidden=true; $('#qt-share').hidden=true;
+      $('#qt-again').className='btn primary big'; $('#qt-again').style.border=''; $('#qt-again').style.background='';
+      return;
+    }
+    $('#qt-share').hidden=false; $('#qt-again').className='btn small'; $('#qt-again').style.border='0'; $('#qt-again').style.background='none';
+    const [t,x]=QT.label(L.score);
+    QT.count(L.score); $('#qt-label').textContent=t; $('#qt-text').textContent=x;
+    $('#qt-parts').innerHTML='<li><span>Notas</span>'+L.notes+'</li><li><span>Sirena</span>'+L.siren+'</li>';
+    const rc=QT.challenge, ro=$('#qt-reto-out'); ro.hidden=!rc;
+    if(rc) ro.textContent=L.score>rc?'¡Has superado el reto! Tenías que pasar de '+rc+'.':'Te han faltado '+(rc-L.score+1)+' puntos para superar el '+rc+'. ¿Otra vez?';
+    $('#qt-share').textContent=L.score>=50?'Retar a un amigo':'Compartir y retar';
+    if(cur==='progress') PG.render();
+  },
+  count(n){const el=$('#qt-num'); const t0=performance.now();
+    (function f(t){const k=clamp((t-t0)/900,0,1); el.textContent=Math.round(n*(1-Math.pow(1-k,3))); if(k<1) requestAnimationFrame(f);})(t0);},
+  resize(){const c=QT.cv; if(!c) return; const r=c.getBoundingClientRect(), d=Math.min(2,devicePixelRatio||1); c.width=Math.round(r.width*d); c.height=Math.round(r.height*d); QT.dpr=d;},
+  draw(st,el,total,sStart){
+    const c=QT.cv, x=c.getContext('2d'), W=c.width, H=c.height, C=QT.colors, d=QT.dpr||1;
+    x.clearRect(0,0,W,H);
+    const lo=53, hi=68, Y=m=>H-((m-lo)/(hi-lo))*H, X=f=>f*W;
+    // banda objetivo
+    x.fillStyle=C.target; x.beginPath();
+    for(let k=0;k<=60;k++){const f=k/60, el2=f*total, u=(el2-sStart)/st.sing, tg=QT.target(st,st.kind==='siren'&&el2<st.ref?el2/st.ref:u); const yy=Y(tg+0.5); k?x.lineTo(X(f),yy):x.moveTo(X(f),yy);}
+    for(let k=60;k>=0;k--){const f=k/60, el2=f*total, u=(el2-sStart)/st.sing, tg=QT.target(st,st.kind==='siren'&&el2<st.ref?el2/st.ref:u); x.lineTo(X(f),Y(tg-0.5));}
+    x.closePath(); x.fill();
+    // zona de escuchar
+    x.fillStyle=C.ghost; x.fillRect(0,0,X(sStart/total),H);
+    // cursor de tiempo
+    x.fillStyle=C.muted; x.fillRect(X(clamp(el/total,0,1))-d,0,2*d,H);
+    // tu voz
+    x.lineWidth=5*d; x.lineCap='round';
+    for(let k=1;k<QT.pts.length;k++){const a=QT.pts[k-1], b=QT.pts[k]; if(b.x-a.x>0.04) continue;
+      const e=Math.abs(b.e); x.strokeStyle=e<0.5?C.ok:e<1?C.near:C.off;
+      x.beginPath(); x.moveTo(X(a.x),Y(a.y)); x.lineTo(X(b.x),Y(b.y)); x.stroke();}
+  },
+  abort(){ if(QT.active){QT.active=false; silenceAll(); if(!$('#qt').hidden) QT.show('start');} },
+  shareUrl(){return location.origin+location.pathname+'?reto='+(QT.last?QT.last.score:0);},
+  async card(){
+    try{await document.fonts.ready;}catch(e){}
+    const L=QT.last, W=1080, H=1350, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const c=cv.getContext('2d');
+    const g=c.createLinearGradient(0,0,0,H); g.addColorStop(0,'#1D1B2E'); g.addColorStop(1,'#13121F'); c.fillStyle=g; c.fillRect(0,0,W,H);
+    c.fillStyle='#A08CFF'; rr(c,80,90,84,84,20); c.fill();
+    c.strokeStyle='#15112C'; c.lineWidth=7; c.lineCap='round'; c.beginPath(); c.moveTo(96,136);
+    c.bezierCurveTo(108,112,116,112,124,136); c.bezierCurveTo(132,160,140,160,148,136); c.stroke();
+    c.fillStyle='#EEECF8'; c.font='800 62px "Bricolage Grotesque", sans-serif'; c.fillText('Afina',190,152);
+    c.fillStyle='#A7A3C4'; c.font='700 44px "Atkinson Hyperlegible", sans-serif'; c.fillText('MI AFINACIÓN',80,320);
+    c.fillStyle='#A08CFF'; c.font='800 380px "Bricolage Grotesque", sans-serif'; c.fillText(String(L.score),60,680);
+    const nw=c.measureText(String(L.score)).width; c.fillStyle='#A7A3C4'; c.font='700 80px "Atkinson Hyperlegible", sans-serif'; c.fillText('/100',60+nw+16,680);
+    c.fillStyle='#EEECF8'; c.font='800 70px "Bricolage Grotesque", sans-serif'; c.fillText(QT.label(L.score)[0],80,900);
+    // línea decorativa
+    c.strokeStyle='#33D3A4'; c.lineWidth=12; c.beginPath(); c.moveTo(80,1040);
+    for(let k=0;k<=40;k++){c.lineTo(80+k*23,1040-Math.sin(k/40*Math.PI)*90);} c.stroke();
+    c.fillStyle='#33D3A4'; c.font='800 64px "Bricolage Grotesque", sans-serif'; c.fillText('¿Me superas?',80,1190);
+    c.fillStyle='#A7A3C4'; c.font='700 38px "Atkinson Hyperlegible", sans-serif'; c.fillText('Haz el test de 30 segundos gratis',80,1255);
+    return new Promise(r=>cv.toBlob(r,'image/png'));
+  },
+  async share(){
+    const L=QT.last; if(!L) return; const url=QT.shareUrl(), msg=$('#qt-msg'); msg.className='pro-msg'; msg.textContent='';
+    const text='Mi afinación: '+L.score+'/100 🎤 ¿Me superas? Test de 30 segundos:';
+    try{
+      const blob=await QT.card(), file=new File([blob],'mi-afinacion.png',{type:'image/png'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],text:text+' '+url}); track('test30-compartido'); return;}
+      if(navigator.share){await navigator.share({text,url}); track('test30-compartido'); return;}
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='mi-afinacion.png'; document.body.appendChild(a); a.click(); a.remove();
+      try{await navigator.clipboard.writeText(text+' '+url);}catch(e){}
+      msg.className='pro-msg good'; msg.textContent='Imagen descargada y enlace del reto copiado: pégalo donde quieras.'; track('test30-compartido');
+    }catch(e){ if(e&&e.name==='AbortError') return; msg.className='pro-msg bad'; msg.textContent='No se ha podido compartir. Haz una captura de pantalla.'; }
+  },
+  toProgram(){
+    if(!data.onboarded){data.onboarded=true; save(); track('bienvenida-completada');}
+    track('test30-a-programa'); QT.close(); if(cur!=='today') go('today'); else TD.render();
+  }
+};
+function readQtColors(){const cs=getComputedStyle(document.documentElement), v=n=>cs.getPropertyValue(n).trim();
+  return {target:v('--target')||'rgba(160,140,255,.2)',ghost:v('--target-ghost')||'rgba(160,140,255,.08)',ok:v('--ok'),near:v('--near'),off:v('--off'),muted:v('--muted')};}
+$('#qt-go').addEventListener('click',()=>QT.go());
+$('#qt-skip').addEventListener('click',()=>{QT.close(); track('test30-saltado'); if(!data.onboarded&&!(data.program&&data.program.log&&data.program.log.length)) INTRO.show();});
+$('#qt-cancel').addEventListener('click',()=>{QT.abort();});
+$('#qt-again').addEventListener('click',()=>QT.go());
+$('#qt-share').addEventListener('click',()=>QT.share());
+$('#qt-program').addEventListener('click',()=>QT.toProgram());
+$('#pg-qt').addEventListener('click',()=>QT.open('progreso'));
+addEventListener('resize',()=>{if(QT.active) QT.resize();});
 
 /* ---------- Bienvenida ---------- */
 const INTRO={
@@ -2393,7 +2619,7 @@ const SGV={
 const views={today:TD,songs:SGV,tuner:TN,imitate:IM,scales:SC,range:RG,progress:PG};
 const PRACT=['tuner','imitate','scales'];
 let cur='today', lastPract='tuner';
-function abortAll(){stopPlay();silenceAll();IM.reset();SC.reset();RG.cancel();RN.abort();SG.abort();}
+function abortAll(){QT.abort();stopPlay();silenceAll();IM.reset();SC.reset();RG.cancel();RN.abort();SG.abort();}
 function go(v){
   if(v==='practice') v=lastPract;
   if(v===cur) return;
@@ -2458,7 +2684,10 @@ addEventListener('pagehide',()=>{if(eng.on) stopMic();});
 // Vista inicial desde el enlace
 const h0=location.hash.slice(1); if(views[h0]&&h0!==cur) go(h0);
 IM.hint(); RG.render(); if(cur==='today') TD.render();
-if(!data.onboarded&&!(data.program&&data.program.log&&data.program.log.length)) INTRO.show();
+{const sp=new URLSearchParams(location.search), rc=parseInt(sp.get('reto'),10);
+  if(rc>=0&&rc<=100){QT.challenge=rc; track('test30-reto-recibido');}
+  const fresh=!data.onboarded&&!(data.program&&data.program.log&&data.program.log.length);
+  if(QT.challenge!=null) QT.open('reto'); else if(location.hash==='#test') QT.open('enlace'); else if(fresh) QT.open('inicio');}
 if(matchMedia('(display-mode: standalone)').matches||navigator.standalone===true) track('abierta-como-app');
 setStatus(false);
 
@@ -2523,7 +2752,7 @@ try{const q=new URLSearchParams(location.search).get('license_key'); if(q&&!PRO.
 SC.marks(); PRO.recheck();
 
 /* ---------- Panel interno (5 toques en el logo) ---------- */
-const APP_VERSION='1.6';
+const APP_VERSION='1.7';
 let taps=[];
 $('.brand').addEventListener('click',()=>{const t=Date.now();taps=taps.filter(x=>t-x<2500);taps.push(t);if(taps.length>=5){taps=[];openStats();}});
 function statsData(){
