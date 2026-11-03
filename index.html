@@ -628,7 +628,7 @@ input[type=text]{min-height:52px;border-radius:12px;border:1px solid var(--line)
       <p class="qt-reto" id="qt-reto-in" hidden></p>
       <button class="btn primary big" id="qt-go" type="button" style="width:100%;margin-top:16px">Hacer el test</button>
       <button class="btn small" id="qt-skip" type="button" style="width:100%;margin-top:8px;border:0;background:none">Ahora no, ver la app</button>
-      <p class="fine">Mejor con auriculares y en un sitio tranquilo. El sonido se analiza en tu dispositivo y no se envía a ningún sitio.</p>
+      <p class="fine">Sube el volumen del móvil y quita el modo silencio. Mejor con auriculares y en un sitio tranquilo. El sonido se analiza en tu dispositivo y no se envía a ningún sitio.</p>
     </div>
     <div id="qt-run" hidden>
       <div class="qt-top"><b id="qt-step">Nota 1 de 3</b><span id="qt-hint">Canta «aaa»</span></div>
@@ -978,9 +978,19 @@ function tick(){
 }
 
 /* Sonidos de referencia */
+// Salida común con limitador: permite subir el volumen sin que distorsione
+function outNode(){
+  const ctx=eng.ctx; if(!ctx) return null;
+  if(eng.out&&eng.outCtx===ctx) return eng.out;
+  const comp=ctx.createDynamicsCompressor();
+  comp.threshold.value=-8; comp.knee.value=4; comp.ratio.value=12; comp.attack.value=0.003; comp.release.value=0.15;
+  const post=ctx.createGain(); post.gain.value=1.25;
+  comp.connect(post).connect(ctx.destination);
+  eng.out=comp; eng.outCtx=ctx; return comp;
+}
 function playTone(m,dur,at,vol){
   const ctx=eng.ctx; if(!ctx) return 0;
-  vol=vol==null?0.28:vol;
+  vol=(vol==null?0.28:vol)*1.9;
   const t0=at!=null?at:ctx.currentTime+0.05;
   const f=m2f(m);
   const g=ctx.createGain();
@@ -988,12 +998,14 @@ function playTone(m,dur,at,vol){
   g.gain.linearRampToValueAtTime(vol,t0+0.025);
   g.gain.setValueAtTime(vol,Math.max(t0+0.03,t0+dur-0.08));
   g.gain.linearRampToValueAtTime(0,t0+dur);
-  g.connect(ctx.destination);
+  g.connect(outNode());
   const o1=ctx.createOscillator(); o1.type='triangle'; o1.frequency.value=f;
   const o2=ctx.createOscillator(); o2.type='sine'; o2.frequency.value=f*2;
-  const g2=ctx.createGain(); g2.gain.value=0.25;
-  o1.connect(g); o2.connect(g2).connect(g);
-  [o1,o2].forEach(o=>{o.start(t0);o.stop(t0+dur+0.05);eng.nodes.add(o);o.onended=()=>eng.nodes.delete(o);});
+  const o3=ctx.createOscillator(); o3.type='sine'; o3.frequency.value=f*3;
+  const g2=ctx.createGain(); g2.gain.value=0.45;
+  const g3=ctx.createGain(); g3.gain.value=0.22;
+  o1.connect(g); o2.connect(g2).connect(g); o3.connect(g3).connect(g);
+  [o1,o2,o3].forEach(o=>{o.start(t0);o.stop(t0+dur+0.05);eng.nodes.add(o);o.onended=()=>eng.nodes.delete(o);});
   return t0;
 }
 function click(at,accent){
@@ -1657,11 +1669,12 @@ function rhythmScore(s,x){
 /* Glissando para la sirena */
 function playGlide(m1,m2,dur,at,vol){
   const ctx=eng.ctx; if(!ctx) return;
-  vol=vol==null?0.22:vol;
+  vol=(vol==null?0.22:vol)*2;
   const o=ctx.createOscillator(),g=ctx.createGain();
-  o.type='triangle'; o.frequency.setValueAtTime(m2f(m1),at); o.frequency.exponentialRampToValueAtTime(m2f(m2),at+dur);
+  o.type='sawtooth'; o.frequency.setValueAtTime(m2f(m1),at); o.frequency.exponentialRampToValueAtTime(m2f(m2),at+dur);
+  const lp=ctx.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=2200;
   g.gain.setValueAtTime(0,at); g.gain.linearRampToValueAtTime(vol,at+0.05); g.gain.setValueAtTime(vol,at+dur-0.08); g.gain.linearRampToValueAtTime(0,at+dur);
-  o.connect(g).connect(ctx.destination); o.start(at); o.stop(at+dur+0.05);
+  o.connect(lp).connect(g).connect(outNode()); o.start(at); o.stop(at+dur+0.05);
   eng.nodes.add(o); o.onended=()=>eng.nodes.delete(o);
 }
 
@@ -2256,7 +2269,7 @@ const QT={
   show(w){['start','run','res'].forEach(k=>$('#qt-'+k).hidden=k!==w);},
   close(){QT.abort(); $('#qt').hidden=true;},
   build(){
-    const N=(m,k)=>({kind:'note',m,lab:'Nota '+k+' de 3',ref:1.1,gap:0.35,sing:2.6});
+    const N=(m,k)=>({kind:'note',m,lab:'Nota '+k+' de 3',ref:1.3,gap:0.35,sing:2.6});
     return [N(60,1),N(64,2),N(62,3),{kind:'siren',a:57,b:64,lab:'Sirena',ref:4,gap:0.45,sing:4}];
   },
   async go(){
@@ -2752,7 +2765,7 @@ try{const q=new URLSearchParams(location.search).get('license_key'); if(q&&!PRO.
 SC.marks(); PRO.recheck();
 
 /* ---------- Panel interno (5 toques en el logo) ---------- */
-const APP_VERSION='1.7';
+const APP_VERSION='1.7.1';
 let taps=[];
 $('.brand').addEventListener('click',()=>{const t=Date.now();taps=taps.filter(x=>t-x<2500);taps.push(t);if(taps.length>=5){taps=[];openStats();}});
 function statsData(){
