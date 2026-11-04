@@ -984,8 +984,10 @@ function outNode(){
   if(eng.out&&eng.outCtx===ctx) return eng.out;
   const comp=ctx.createDynamicsCompressor();
   comp.threshold.value=-8; comp.knee.value=4; comp.ratio.value=12; comp.attack.value=0.003; comp.release.value=0.15;
-  const post=ctx.createGain(); post.gain.value=1.25;
-  comp.connect(post).connect(ctx.destination);
+  const post=ctx.createGain(); post.gain.value=0.72;
+  const safe=ctx.createWaveShaper(); const cv=new Float32Array(1025);
+  for(let i=0;i<1025;i++){const x=i/512-1; cv[i]=Math.tanh(1.4*x)/Math.tanh(1.4);} safe.curve=cv;
+  comp.connect(post).connect(safe).connect(ctx.destination);
   eng.out=comp; eng.outCtx=ctx; return comp;
 }
 function playTone(m,dur,at,vol){
@@ -2297,7 +2299,11 @@ const QT={
     if(!listening&&el<=total){
       const u=(el-sStart)/st.sing, tg=QT.target(st,u);
       st.frames++;
-      if(fr.m!=null){let e=fr.m-tg; e-=12*Math.round(e/12); st.voiced.push({u,e}); QT.pts.push({x:el/total,y:tg+e,e});}
+      if(fr.m!=null){
+        const fold=t=>{let e=fr.m-t; return e-12*Math.round(e/12);};
+        let e=fold(tg);
+        if(st.kind==='siren'){const lag=0.3/st.sing; for(const k of [0.5,1]){const e2=fold(QT.target(st,Math.max(0,u-lag*k))); if(Math.abs(e2)<Math.abs(e)) e=e2;}}
+        st.voiced.push({u,e}); QT.pts.push({x:el/total,y:tg+e,e});}
     }
     const done=QT.steps.slice(0,QT.i).reduce((a,s)=>a+s.ref+s.gap+s.sing,0);
     const all=QT.steps.reduce((a,s)=>a+s.ref+s.gap+s.sing,0);
@@ -2314,7 +2320,7 @@ const QT={
       return {kind:'note',score:Math.round(clamp(100-(med-20),0,100)*cov),cents:Math.round(med)};
     }
     const v=st.voiced; if(v.length<10) return {kind:'siren',score:0,silent:true};
-    const avg=v.reduce((a,p)=>a+clamp(1-(Math.abs(p.e)-0.5)/1.0,0,1),0)/v.length;
+    const avg=v.reduce((a,p)=>a+clamp(1-(Math.abs(p.e)-0.7)/1.3,0,1),0)/v.length;
     const cov=clamp((v.length/Math.max(1,st.frames))/0.6,0,1);
     return {kind:'siren',score:Math.round(100*avg*cov)};
   },
@@ -2765,7 +2771,7 @@ try{const q=new URLSearchParams(location.search).get('license_key'); if(q&&!PRO.
 SC.marks(); PRO.recheck();
 
 /* ---------- Panel interno (5 toques en el logo) ---------- */
-const APP_VERSION='1.7.1';
+const APP_VERSION='1.7.2';
 let taps=[];
 $('.brand').addEventListener('click',()=>{const t=Date.now();taps=taps.filter(x=>t-x<2500);taps.push(t);if(taps.length>=5){taps=[];openStats();}});
 function statsData(){
