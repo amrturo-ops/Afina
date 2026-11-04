@@ -2302,7 +2302,7 @@ const QT={
       if(fr.m!=null){
         const fold=t=>{let e=fr.m-t; return e-12*Math.round(e/12);};
         let e=fold(tg);
-        if(st.kind==='siren'){const lag=0.3/st.sing; for(const k of [0.5,1]){const e2=fold(QT.target(st,Math.max(0,u-lag*k))); if(Math.abs(e2)<Math.abs(e)) e=e2;}}
+        if(st.kind==='siren'){const lag=0.15/st.sing; for(const k of [1]){const e2=fold(QT.target(st,Math.max(0,u-lag*k))); if(Math.abs(e2)<Math.abs(e)) e=e2;}}
         st.voiced.push({u,e}); QT.pts.push({x:el/total,y:tg+e,e});}
     }
     const done=QT.steps.slice(0,QT.i).reduce((a,s)=>a+s.ref+s.gap+s.sing,0);
@@ -2320,7 +2320,7 @@ const QT={
       return {kind:'note',score:Math.round(clamp(100-(med-20),0,100)*cov),cents:Math.round(med)};
     }
     const v=st.voiced; if(v.length<10) return {kind:'siren',score:0,silent:true};
-    const avg=v.reduce((a,p)=>a+clamp(1-(Math.abs(p.e)-0.7)/1.3,0,1),0)/v.length;
+    const avg=v.reduce((a,p)=>a+clamp(1-(Math.abs(p.e)-0.6)/1.1,0,1),0)/v.length;
     const cov=clamp((v.length/Math.max(1,st.frames))/0.6,0,1);
     return {kind:'siren',score:Math.round(100*avg*cov)};
   },
